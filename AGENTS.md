@@ -35,7 +35,7 @@ docs/
   DEV.md # Documentación viva del proyecto (estructura y responsabilidades)
 tests/ # Unit/Integration tests (Jest)
 tests-e2e/ # E2E tests (Playwright)
-jest.config.ts # Configuración de Jest (next/jest)
+jest.config.mjs # Configuración de Jest (next/jest)
 jest.setup.ts # Setup de Testing Library
 playwright.config.ts # Configuración de Playwright
 

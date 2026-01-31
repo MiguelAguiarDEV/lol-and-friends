@@ -27,7 +27,7 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
 ## Testing
 - Unit/Integration: Jest + Testing Library
 - E2E Frontend: Playwright
-- Configuración: `jest.config.ts`, `jest.setup.ts`, `playwright.config.ts`
+- Configuración: `jest.config.mjs`, `jest.setup.ts`, `playwright.config.ts`
  - Nota: correr `bunx playwright install` la primera vez para descargar navegadores.
 
 ## CI/CD y hooks
