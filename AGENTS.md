@@ -77,7 +77,7 @@ playwright.config.ts # Configuración de Playwright
 
 - **GitHub Actions**: `.github/workflows/ci.yml` corre `lint`, `test`, `build` y `test:e2e` en push/PR.
 - **Hooks locales** (simple-git-hooks):
-  - `pre-commit`: `bun run lint`
+  - `pre-commit`: `bun run lint && bun run test`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Recomendación: activar *Branch Protection Rules* en GitHub para exigir checks verdes antes de merge.
 
