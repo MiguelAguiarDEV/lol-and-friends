@@ -13,15 +13,23 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.37.1",
+    "@libsql/client": "^0.17.0",
+    "drizzle-orm": "^0.45.1",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
+    "@commitlint/cli": "^20.4.0",
+    "@commitlint/config-conventional": "^20.4.0",
     "@playwright/test": "^1.58.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
@@ -31,6 +39,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "simple-git-hooks": "^2.13.1",
@@ -47,6 +57,7 @@
   ],
   "simple-git-hooks": {
     "pre-commit": "bun run lint && bun run test",
-    "pre-push": "bun run lint && bun run test && bun run build && bun run test:e2e"
+    "pre-push": "bun run lint && bun run test && bun run build && bun run test:e2e",
+    "commit-msg": "bunx commitlint --edit $1"
   }
 }
