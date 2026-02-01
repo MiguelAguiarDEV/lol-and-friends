@@ -1,0 +1,23 @@
+name: Cron Sync
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call sync endpoint
+        env:
+          SYNC_URL: ${{ secrets.CRON_SYNC_URL || 'https://lol.miguelaguiar.dev/api/sync' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -n "$CRON_SECRET" ]; then
+            curl -fsS --max-time 30 --retry 3 --retry-all-errors --retry-delay 5 \
+              -H "Authorization: Bearer $CRON_SECRET" "$SYNC_URL"
+          else
+            curl -fsS --max-time 30 --retry 3 --retry-all-errors --retry-delay 5 \
+              "$SYNC_URL"
+          fi

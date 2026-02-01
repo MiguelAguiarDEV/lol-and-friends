@@ -1,18 +1,67 @@
 import { formatPercent, getGames, getWinrate } from "@/lib/players/metrics";
-import type { Player } from "@/lib/types";
+import { getRankScore } from "@/lib/players/rank";
+
+export type PlayerRow = {
+  id: string;
+  gameName: string;
+  tagLine: string;
+  region: string;
+  opggUrl?: string | null;
+  tier?: string | null;
+  division?: string | null;
+  lp?: number | null;
+  wins?: number | null;
+  losses?: number | null;
+  notes?: string | null;
+  objective?: string | null;
+  monthCheckpoint?: string | null;
+  lastSyncAt?: string | null;
+};
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", {
   dateStyle: "medium",
 });
 
+type SortKey = "winrate" | "lp" | "rank" | "updated";
+
+type PlayersTableProps = {
+  players: PlayerRow[];
+  title?: string;
+  subtitle?: string;
+  sort?: SortKey;
+};
+
 /**
  * Render the public players table.
  */
-export function PlayersTable(props: { players: Player[] }) {
+export function PlayersTable(props: PlayersTableProps) {
+  const sortKey = props.sort ?? "winrate";
   const sortedPlayers = [...props.players].sort((a, b) => {
+    const winsA = a.wins ?? 0;
+    const lossesA = a.losses ?? 0;
+    const winsB = b.wins ?? 0;
+    const lossesB = b.losses ?? 0;
+
+    if (sortKey === "lp") {
+      return (b.lp ?? 0) - (a.lp ?? 0);
+    }
+
+    if (sortKey === "rank") {
+      return (
+        getRankScore({ tier: b.tier, division: b.division, lp: b.lp }) -
+        getRankScore({ tier: a.tier, division: a.division, lp: a.lp })
+      );
+    }
+
+    if (sortKey === "updated") {
+      const timeA = a.lastSyncAt ? Date.parse(a.lastSyncAt) : 0;
+      const timeB = b.lastSyncAt ? Date.parse(b.lastSyncAt) : 0;
+      return timeB - timeA;
+    }
+
     return (
-      getWinrate({ wins: b.wins, losses: b.losses }) -
-      getWinrate({ wins: a.wins, losses: a.losses })
+      getWinrate({ wins: winsB, losses: lossesB }) -
+      getWinrate({ wins: winsA, losses: lossesA })
     );
   });
 
@@ -20,20 +69,20 @@ export function PlayersTable(props: { players: Player[] }) {
     <section className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-          Reto LoL — Tabla pública
+          {props.title ?? "Reto LoL — Tabla pública"}
         </h1>
         <p className="text-sm text-gray-600 sm:text-base">
-          Vista read-only. Los datos se actualizarán desde el panel admin.
+          {props.subtitle ??
+            "Vista read-only. Los datos se actualizarán desde el panel admin."}
         </p>
       </header>
 
       <div className="grid gap-4 md:hidden">
         {sortedPlayers.map((player) => {
-          const games = getGames({ wins: player.wins, losses: player.losses });
-          const winrate = getWinrate({
-            wins: player.wins,
-            losses: player.losses,
-          });
+          const wins = player.wins ?? 0;
+          const losses = player.losses ?? 0;
+          const games = getGames({ wins, losses });
+          const winrate = getWinrate({ wins, losses });
 
           return (
             <article
@@ -43,10 +92,13 @@ export function PlayersTable(props: { players: Player[] }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="text-base font-semibold text-gray-900">
-                    {player.name}
+                    {player.gameName}
+                    <span className="text-sm text-gray-400">
+                      #{player.tagLine}
+                    </span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    Pico: {player.peakRank}
+                    Liga actual: {player.tier ?? "—"} {player.division ?? ""}
                   </div>
                   {player.notes ? (
                     <div className="text-xs text-gray-400">{player.notes}</div>
@@ -54,21 +106,23 @@ export function PlayersTable(props: { players: Player[] }) {
                 </div>
                 <div className="text-right text-xs text-gray-600">
                   <div className="font-semibold text-gray-900">
-                    {player.tier} {player.division}
+                    {player.tier ?? "—"} {player.division ?? ""}
                   </div>
-                  <div>{player.role}</div>
+                  <div>{player.region.toUpperCase()}</div>
                 </div>
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-gray-600 sm:grid-cols-3">
                 <div>
                   <div className="text-[10px] uppercase text-gray-400">LP</div>
-                  <div className="font-medium text-gray-900">{player.lp}</div>
+                  <div className="font-medium text-gray-900">
+                    {player.lp ?? "—"}
+                  </div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase text-gray-400">W/L</div>
                   <div className="font-medium text-gray-900">
-                    {player.wins}/{player.losses}
+                    {wins}/{losses}
                   </div>
                   <div className="text-[10px] text-gray-400">{games} games</div>
                 </div>
@@ -83,10 +137,10 @@ export function PlayersTable(props: { players: Player[] }) {
                     Objetivo
                   </div>
                   <div className="font-medium text-gray-900">
-                    {player.objective}
+                    {player.objective ?? "—"}
                   </div>
                   <div className="text-[10px] text-gray-400">
-                    {player.monthCheckpoint}
+                    {player.monthCheckpoint ?? "—"}
                   </div>
                 </div>
                 <div>
@@ -94,21 +148,27 @@ export function PlayersTable(props: { players: Player[] }) {
                     Actualizado
                   </div>
                   <div className="font-medium text-gray-900">
-                    {dateFormatter.format(new Date(player.lastUpdated))}
+                    {player.lastSyncAt
+                      ? dateFormatter.format(new Date(player.lastSyncAt))
+                      : "—"}
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase text-gray-400">
                     OPGG
                   </div>
-                  <a
-                    className="font-medium text-blue-600 hover:text-blue-800"
-                    href={player.opggUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Ver perfil
-                  </a>
+                  {player.opggUrl ? (
+                    <a
+                      className="font-medium text-blue-600 hover:text-blue-800"
+                      href={player.opggUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Ver perfil
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
                 </div>
               </div>
             </article>
@@ -121,7 +181,7 @@ export function PlayersTable(props: { players: Player[] }) {
           <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <th className="px-4 py-3">Jugador</th>
-              <th className="px-4 py-3">Rol</th>
+              <th className="px-4 py-3">Región</th>
               <th className="px-4 py-3">Liga</th>
               <th className="px-4 py-3">LP</th>
               <th className="px-4 py-3">W/L</th>
@@ -133,23 +193,22 @@ export function PlayersTable(props: { players: Player[] }) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {sortedPlayers.map((player) => {
-              const games = getGames({
-                wins: player.wins,
-                losses: player.losses,
-              });
-              const winrate = getWinrate({
-                wins: player.wins,
-                losses: player.losses,
-              });
+              const wins = player.wins ?? 0;
+              const losses = player.losses ?? 0;
+              const games = getGames({ wins, losses });
+              const winrate = getWinrate({ wins, losses });
 
               return (
                 <tr key={player.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">
-                      {player.name}
+                      {player.gameName}
+                      <span className="text-xs text-gray-400">
+                        #{player.tagLine}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      Pico: {player.peakRank}
+                      Liga actual: {player.tier ?? "—"} {player.division ?? ""}
                     </div>
                     {player.notes ? (
                       <div className="text-xs text-gray-400">
@@ -157,36 +216,42 @@ export function PlayersTable(props: { players: Player[] }) {
                       </div>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3">{player.role}</td>
+                  <td className="px-4 py-3">{player.region.toUpperCase()}</td>
                   <td className="px-4 py-3">
-                    {player.tier} {player.division}
+                    {player.tier ?? "—"} {player.division ?? ""}
                   </td>
-                  <td className="px-4 py-3">{player.lp}</td>
+                  <td className="px-4 py-3">{player.lp ?? "—"}</td>
                   <td className="px-4 py-3">
-                    {player.wins}/{player.losses}
+                    {wins}/{losses}
                     <div className="text-xs text-gray-400">{games} games</div>
                   </td>
                   <td className="px-4 py-3 font-medium">
                     {formatPercent(winrate)}
                   </td>
                   <td className="px-4 py-3">
-                    {player.objective}
+                    {player.objective ?? "—"}
                     <div className="text-xs text-gray-400">
-                      {player.monthCheckpoint}
+                      {player.monthCheckpoint ?? "—"}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
-                    {dateFormatter.format(new Date(player.lastUpdated))}
+                    {player.lastSyncAt
+                      ? dateFormatter.format(new Date(player.lastSyncAt))
+                      : "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      className="text-blue-600 hover:text-blue-800"
-                      href={player.opggUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Ver perfil
-                    </a>
+                    {player.opggUrl ? (
+                      <a
+                        className="text-blue-600 hover:text-blue-800"
+                        href={player.opggUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Ver perfil
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </td>
                 </tr>
               );

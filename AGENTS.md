@@ -1,7 +1,6 @@
 # Repository Guidelines (AGENTS)
 
-Este repo implementa **Reto LoL**, una web full-stack con **Next.js (App Router)** desplegada en **Vercel**, usando **Turso (SQLite remoto)** como base de datos y **Clerk** para autenticación.  
-El objetivo es reemplazar el seguimiento en Excel por una tabla pública + panel admin para editar datos.
+Este repo implementa **Reto LoL**, una web full-stack con **Next.js (App Router)** desplegada en **Vercel**, usando **Turso (SQLite remoto)** como base de datos, **Clerk** para autenticación y **Riot API** para sync.
 
 ---
 
@@ -10,42 +9,40 @@ El objetivo es reemplazar el seguimiento en Excel por una tabla pública + panel
 Estructura recomendada (alineada con Next.js App Router):
 
 app/
-  page.tsx # Vista pública (read-only)
+  page.tsx # Home con grupos públicos
+  g/
+    [slug]/page.tsx # Tabla pública por grupo
   hello-world/
     page.tsx # Ruta de verificación /hello-world
   admin/
     page.tsx # Panel admin (protegido)
     actions.ts # Server Actions (mutaciones admin)
-  api/ # Route Handlers (solo si hace falta: jobs/webhooks)
+  api/
+    sync/route.ts # Cron sync Riot
 components/
-  ui/ # shadcn/ui
-  players/ # Componentes del dominio "players" (tabla, forms, etc.)
+  groups/ # Listado de grupos
+  players/ # Tabla + cards de jugadores
 lib/
   db/
     client.ts # Cliente Turso (@libsql/client) + Drizzle
-    schema.ts # Drizzle schema (players, rank_snapshots)
-    queries.ts # Consultas reutilizables (select/update/insert)
-  validations/
-    players.ts # Zod schemas para inputs (admin)
-  auth/
-    admin.ts # Helpers: allowlist, guards de admin
-  types/
-    index.ts # Tipos compartidos (cuando aplique)
+    schema.ts # Drizzle schema
+    queries.ts # Consultas reutilizables
+    migrations/ # Migraciones Drizzle
+  riot/ # API + sync + regiones
+  players/ # Métricas + ranking
+  utils/ # helpers (slug/time)
+  logger.ts # logger estructurado
 docs/
-  DEV.md # Documentación viva del proyecto (estructura y responsabilidades)
+  DEV.md # Documentación viva del proyecto
+
 tests/ # Unit/Integration tests (Jest)
 tests-e2e/ # E2E tests (Playwright)
-jest.config.mjs # Configuración de Jest (next/jest)
-jest.setup.ts # Setup de Testing Library
-playwright.config.ts # Configuración de Playwright
-
 
 **Reglas de organización**
 - **SQL/DB solo en `lib/db`** (no queries sueltas en componentes).
-- **Validación Zod solo en `lib/validations`**.
 - `app/*` orquesta: UI + llamadas a queries/actions.
 - `components/*` contiene UI reutilizable (mobile-first).
-- Mantener el dominio “players” separado (evitar carpetas genéricas enormes).
+- Mantener el dominio “players” separado.
 
 ---
 
@@ -54,7 +51,7 @@ playwright.config.ts # Configuración de Playwright
 ### Desarrollo
 - `bun dev` — inicia entorno local
 - `bun run build` — build de producción
-- `bun run start` — servir build local (si aplica)
+- `bun run start` — servir build local
 
 ### Calidad
 - `bun run lint` — Biome check
@@ -67,7 +64,8 @@ playwright.config.ts # Configuración de Playwright
 - `bun run test:e2e` — Playwright
 
 ### Base de datos (Drizzle)
-- Pendiente: definir scripts `db:generate` y `db:migrate` cuando se integre Drizzle.
+- `bun run db:generate` — generar migraciones
+- `bun run db:migrate` — aplicar migraciones
 
 > Nota: Si cambian scripts/commands, **docs/DEV.md**.
 
@@ -76,10 +74,14 @@ playwright.config.ts # Configuración de Playwright
 ## CI/CD y Git Hooks
 
 - **GitHub Actions**: `.github/workflows/ci.yml` corre `lint`, `test`, `build` y `test:e2e` en push/PR.
+- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
 - **Hooks locales** (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
+  - `commit-msg`: `bunx commitlint --edit $1`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Recomendación: activar *Branch Protection Rules* en GitHub para exigir checks verdes antes de merge.
+
+---
 
 ## Coding Style & Naming Conventions
 
@@ -91,14 +93,11 @@ playwright.config.ts # Configuración de Playwright
 - **Mobile-first** y layouts simples (sin árboles infinitos de `div`).
 
 ### Reglas prácticas
-- **Máximo 2 argumentos por función**. Si hace falta más, usar un `object` tipado:
-  - `type Params = { ... }` / `interface Params { ... }`
+- **Máximo 2 argumentos por función**. Si hace falta más, usar un `object` tipado.
 - **TsDoc obligatorio** para funciones públicas/utilitarias y módulos clave.
 - Componentes:
   - `PascalCase` para React components.
   - Archivos en `kebab-case.ts/tsx` (ej: `players-table.tsx`).
-- Validación de inputs:
-  - Toda mutación (Server Action / Route Handler) valida con **Zod**.
 - Derivados:
   - `winrate` y `games` se **calculan** (no persistir salvo necesidad futura).
 
@@ -107,10 +106,10 @@ playwright.config.ts # Configuración de Playwright
 ## Backend Pattern (Next.js)
 
 - **Server Components por defecto**.
-- **Client Components solo cuando sea necesario** (formularios, interactividad).
+- **Client Components solo cuando sea necesario**.
 - Mutaciones:
   - **Server Actions** para CRUD interno del admin.
-  - `app/api/*` solo si se necesita para jobs o integraciones futuras.
+  - `app/api/*` solo para jobs/cron.
 - Acceso a DB **solo en servidor**.
 
 ---
@@ -118,38 +117,26 @@ playwright.config.ts # Configuración de Playwright
 ## Auth & Authorization (Clerk)
 
 - Clerk protege autenticación (Google/GitHub).
-- `/admin` requiere:
-  1) Sesión válida (Clerk)
-  2) Allowlist por email (env: `ADMIN_EMAILS`)
-- **Cada operación de escritura** debe re-verificar permisos en servidor.
-  - No confiar en “ocultar UI”.
+- `/admin` requiere sesión válida.
+- MVP actual: **solo grupos públicos**; privados/invitaciones quedan para futuro.
 
 ---
 
 ## Testing Guidelines
 
-Objetivo: **>= 70% coverage** en el core de negocio (queries, validación, acciones).
+Objetivo: **>= 70% coverage** en el core de negocio (queries, sync, ranking).
 
 - Unit/Integration: **Jest** + **Testing Library**
 - E2E Frontend: **Playwright**
-- Tipos de test:
-  - Unit: validaciones Zod, helpers de auth, lógica de ranking/ordenación.
-  - Integration (mínimo): actions/queries con DB de test o mocks controlados.
-  - E2E: flujos críticos de UI (público y admin).
 - Convenciones:
   - `*.test.ts` / `*.test.tsx`
   - `tests-e2e/*.spec.ts`
-- Comandos:
-  - `bun run test`
-  - `bun run test:watch`
-  - `bun run test:coverage`
-  - `bun run test:e2e`
 
 ---
 
 ## Commit & Pull Request Guidelines
 
-- Commits: (ej: `[FEAT](TITULO DEL FEAT) Info del desarrollo `).
+- Commits: **Conventional Commits** (ej: `feat(admin): add group form`).
 - PRs:
   - Pequeños, enfocados.
   - Incluir “cómo probar” + screenshots si hay UI.
@@ -165,11 +152,6 @@ Objetivo: **>= 70% coverage** en el core de negocio (queries, validación, accio
 - se introduce una convención nueva,
 - se agregan scripts/commands.
 
-Debe incluir:
-- descripción corta de cada carpeta/archivo clave,
-- responsabilidades y flujos principales (public view, admin edits),
-- notas sobre DB schema y migraciones.
-
 ---
 
 ## Environment Variables (mínimas)
@@ -178,4 +160,5 @@ Debe incluir:
 - `TURSO_AUTH_TOKEN`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
-- `ADMIN_EMAILS` (csv: `a@x.com,b@y.com`)
+- `RIOT_API_KEY`
+- `CRON_SECRET` (opcional)
