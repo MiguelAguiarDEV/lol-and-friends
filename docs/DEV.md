@@ -8,8 +8,12 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
   - `page.tsx` — vista pública (read-only)
   - `hello-world/page.tsx` — verificación de funcionamiento
 - `components/` — UI reutilizable (cuando se agregue)
+- `components/players/players-table.tsx` — tabla pública (read-only)
 - `lib/` — lógica de dominio, DB y validaciones (cuando se agregue)
+- `lib/players/` — mocks y métricas del dominio players
+- `lib/types/` — tipos compartidos del dominio
 - `docs/` — documentación viva
+- `docs/screenshots/` — capturas de la UI (Playwright)
 - `tests/` — unit/integration (Jest)
 - `tests-e2e/` — e2e (Playwright)
 
@@ -36,6 +40,17 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
   - `pre-commit`: `bun run lint && bun run test`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Para bloquear merges sin checks verdes, configurar Branch Protection en GitHub.
+
+## Screenshots (Playwright)
+- Ejecutar: `node scripts/capture-screens.mjs`
+- Genera: `docs/screenshots/public-table-desktop.png` y `docs/screenshots/public-table-mobile.png`
+
+## Workflow frontend
+1. Implementar UI (desktop-first o mobile-first según caso).
+2. Verificar **responsividad** en mobile y desktop (breakpoints y overflow).
+3. Generar capturas Playwright (desktop + mobile).
+4. Revisar que **toda la información clave** sea visible en mobile sin perder columnas críticas.
+5. Adjuntar capturas en la PR (raw URLs) y describir el flujo de uso.
 
 ## Notas
 - Documentar cualquier cambio de estructura o nuevas responsabilidades aquí.
