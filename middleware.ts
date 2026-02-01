@@ -20,12 +20,12 @@ const middleware = screenshotMode
         return;
       }
 
-      auth.protect();
+      const authObject = await auth.protect();
       if (adminEmails.length === 0) {
         return;
       }
 
-      const email = auth.sessionClaims?.email;
+      const email = authObject.sessionClaims?.email;
       const normalizedEmail =
         typeof email === "string" ? email.toLowerCase() : "";
 
