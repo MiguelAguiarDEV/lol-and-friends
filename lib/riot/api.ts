@@ -52,6 +52,19 @@ export type RiotLeagueEntry = {
 };
 
 /**
+ * Obtiene entradas de liga por PUUID.
+ * @param params - Región de plataforma y PUUID.
+ * @returns Entradas de liga.
+ */
+export async function getLeagueEntriesByPuuid(params: {
+  platformRegion: RiotPlatformRegion;
+  puuid: string;
+}) {
+  const url = `https://${params.platformRegion}.api.riotgames.com/lol/league/v4/entries/by-puuid/${params.puuid}`;
+  return riotFetch<RiotLeagueEntry[]>(url);
+}
+
+/**
  * Obtiene cuenta de Riot a partir de Riot ID (gameName + tag).
  * @param params - Región y Riot ID.
  * @returns Cuenta con PUUID.
