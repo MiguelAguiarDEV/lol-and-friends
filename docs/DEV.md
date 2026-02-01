@@ -39,6 +39,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `CLERK_SECRET_KEY`
 - `RIOT_API_KEY`
 - `CRON_SECRET` (opcional)
+- `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
 
 ## Testing
 - Unit/Integration: Jest + Testing Library
@@ -48,6 +49,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 
 ## CI/CD y hooks
 - GitHub Actions: `.github/workflows/ci.yml` ejecuta lint/test/build/test:e2e en push y PR.
+- Cron (GitHub Actions): `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
 - Hooks locales (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`
@@ -55,7 +57,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 
 ## Sync Riot
 - Endpoint: `GET /api/sync`
-- Cron en `vercel.json` cada 10 minutos.
+- Cron en GitHub Actions cada 10 minutos.
 - Sync incremental por lotes (no actualiza todo a la vez).
 - Manual sync desde `/admin` con cooldown configurable.
 

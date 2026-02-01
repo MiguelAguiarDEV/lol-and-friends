@@ -32,8 +32,6 @@ lib/
   players/ # Métricas + ranking
   utils/ # helpers (slug/time)
   logger.ts # logger estructurado
-vercel.json # cron schedule
-
 docs/
   DEV.md # Documentación viva del proyecto
 
@@ -76,6 +74,7 @@ tests-e2e/ # E2E tests (Playwright)
 ## CI/CD y Git Hooks
 
 - **GitHub Actions**: `.github/workflows/ci.yml` corre `lint`, `test`, `build` y `test:e2e` en push/PR.
+- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
 - **Hooks locales** (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`

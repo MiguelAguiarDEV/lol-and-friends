@@ -71,9 +71,11 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - `CLERK_SECRET_KEY`
 - `RIOT_API_KEY`
 - `CRON_SECRET` (opcional, si quieres proteger `/api/sync` con token)
+- `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
 
 ## CI/CD y calidad
 - **GitHub Actions**: `.github/workflows/ci.yml` ejecuta `lint`, `test`, `build` y `test:e2e` en cada push y PR.
+- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
 - **Hooks locales** (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`
