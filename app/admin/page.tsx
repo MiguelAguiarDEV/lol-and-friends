@@ -14,7 +14,7 @@ import {
 } from "@/lib/db/queries";
 
 export default async function AdminPage() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
   }

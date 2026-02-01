@@ -52,7 +52,7 @@ const manualSyncSchema = z.object({
 });
 
 async function requireUser() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     redirect("/sign-in");
   }
