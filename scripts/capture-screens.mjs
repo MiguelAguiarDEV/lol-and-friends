@@ -145,14 +145,6 @@ async function cleanupSeedData(client, seed) {
     return;
   }
 
-  if (seed.playerIds.length > 0) {
-    const placeholders = seed.playerIds.map(() => "?").join(",");
-    await client.execute({
-      sql: `delete from players where id in (${placeholders})`,
-      args: seed.playerIds,
-    });
-  }
-
   await client.execute({
     sql: "delete from group_players where group_id = ?",
     args: [seed.group.id],
@@ -165,6 +157,13 @@ async function cleanupSeedData(client, seed) {
     sql: "delete from groups where id = ?",
     args: [seed.group.id],
   });
+  if (seed.playerIds.length > 0) {
+    const placeholders = seed.playerIds.map(() => "?").join(",");
+    await client.execute({
+      sql: `delete from players where id in (${placeholders})`,
+      args: seed.playerIds,
+    });
+  }
   await client.execute({
     sql: "delete from users where id = ?",
     args: [seed.userId],

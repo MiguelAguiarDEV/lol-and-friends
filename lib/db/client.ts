@@ -1,3 +1,4 @@
+/** Turso + Drizzle client wiring for the data layer. */
 import { createClient } from "@libsql/client";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import { drizzle } from "drizzle-orm/libsql";
@@ -8,6 +9,10 @@ type Db = LibSQLDatabase<typeof schema>;
 let cachedDb: Db | null = null;
 let nullDb: Db | null = null;
 
+/**
+ * Indica si la DB está configurada vía TURSO_DATABASE_URL.
+ * @returns True si hay URL configurada.
+ */
 export function isDbConfigured() {
   return Boolean(process.env.TURSO_DATABASE_URL);
 }

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db, isDbConfigured } from "@/lib/db/client";
 import {
   groupMembers,
@@ -58,6 +58,11 @@ const screenshotPlayers = [
   },
 ];
 
+/**
+ * Garantiza que exista un usuario en DB, actualizando el email si cambia.
+ * @param params - Identificador y email opcional.
+ * @returns El registro del usuario.
+ */
 export async function ensureUser(params: { id: string; email?: string }) {
   const existing = await db.query.users.findFirst({
     where: eq(users.id, params.id),
@@ -69,6 +74,7 @@ export async function ensureUser(params: { id: string; email?: string }) {
         .update(users)
         .set({ email: params.email })
         .where(eq(users.id, params.id));
+      return db.query.users.findFirst({ where: eq(users.id, params.id) });
     }
     return existing;
   }
@@ -81,6 +87,10 @@ export async function ensureUser(params: { id: string; email?: string }) {
   return db.query.users.findFirst({ where: eq(users.id, params.id) });
 }
 
+/**
+ * Devuelve los grupos públicos, o datos demo si SCREENSHOT_MODE está activo.
+ * @returns Lista de grupos públicos.
+ */
 export async function getPublicGroups() {
   if (screenshotMode) {
     return [screenshotGroup];
@@ -96,6 +106,11 @@ export async function getPublicGroups() {
   });
 }
 
+/**
+ * Lista grupos donde el usuario es owner o miembro.
+ * @param userId - ID del usuario.
+ * @returns Grupos asociados al usuario.
+ */
 export async function getGroupsForUser(userId: string) {
   if (!isDbConfigured()) {
     return [];
@@ -122,6 +137,11 @@ function orOwnerOrMember(params: { userId: string }) {
   return sql`(${groups.ownerId} = ${params.userId} OR ${groupMembers.userId} = ${params.userId})`;
 }
 
+/**
+ * Obtiene un grupo por slug y sus jugadores.
+ * @param slug - Slug del grupo.
+ * @returns Grupo y jugadores, o null si no existe.
+ */
 export async function getGroupBySlug(slug: string) {
   if (screenshotMode) {
     if (slug !== screenshotGroup.slug) {
@@ -168,6 +188,11 @@ export async function getGroupBySlug(slug: string) {
   return { group, players: playerRows };
 }
 
+/**
+ * Crea un grupo y registra al owner como miembro.
+ * @param params - Datos de creación del grupo.
+ * @returns El grupo creado.
+ */
 export async function createGroup(params: {
   id: string;
   name: string;
@@ -196,6 +221,10 @@ export async function createGroup(params: {
   return db.query.groups.findFirst({ where: eq(groups.id, params.id) });
 }
 
+/**
+ * Actualiza intervalos de sincronización del grupo.
+ * @param params - IDs y nuevos valores de settings.
+ */
 export async function updateGroupSettings(params: {
   groupId: string;
   syncIntervalMinutes: number;
@@ -211,6 +240,10 @@ export async function updateGroupSettings(params: {
     .where(eq(groups.id, params.groupId));
 }
 
+/**
+ * Actualiza la marca de tiempo del último sync manual.
+ * @param params - ID del grupo.
+ */
 export async function touchGroupManualSync(params: { groupId: string }) {
   await db
     .update(groups)
@@ -221,6 +254,11 @@ export async function touchGroupManualSync(params: { groupId: string }) {
     .where(eq(groups.id, params.groupId));
 }
 
+/**
+ * Busca un jugador por identidad (gameName, tagLine, región).
+ * @param params - Identidad del jugador.
+ * @returns El jugador si existe.
+ */
 export async function findPlayerByIdentity(params: {
   gameName: string;
   tagLine: string;
@@ -235,6 +273,11 @@ export async function findPlayerByIdentity(params: {
   });
 }
 
+/**
+ * Crea un jugador base en la DB.
+ * @param params - Datos del jugador.
+ * @returns El jugador recién creado.
+ */
 export async function createPlayer(params: {
   id: string;
   gameName: string;
@@ -253,6 +296,10 @@ export async function createPlayer(params: {
   return db.query.players.findFirst({ where: eq(players.id, params.id) });
 }
 
+/**
+ * Asocia un jugador a un grupo si no existe la relación.
+ * @param params - IDs de grupo y jugador.
+ */
 export async function addPlayerToGroup(params: {
   groupId: string;
   playerId: string;
@@ -266,6 +313,10 @@ export async function addPlayerToGroup(params: {
     .onConflictDoNothing();
 }
 
+/**
+ * Elimina la relación entre jugador y grupo.
+ * @param params - IDs de grupo y jugador.
+ */
 export async function removePlayerFromGroup(params: {
   groupId: string;
   playerId: string;
@@ -280,6 +331,11 @@ export async function removePlayerFromGroup(params: {
     );
 }
 
+/**
+ * Obtiene jugadores asociados a un grupo.
+ * @param groupId - ID del grupo.
+ * @returns Lista de jugadores del grupo.
+ */
 export async function getGroupPlayers(groupId: string) {
   return db
     .select({
@@ -287,6 +343,7 @@ export async function getGroupPlayers(groupId: string) {
       gameName: players.gameName,
       tagLine: players.tagLine,
       region: players.region,
+      puuid: players.puuid,
       opggUrl: players.opggUrl,
       tier: players.tier,
       division: players.division,
@@ -303,6 +360,10 @@ export async function getGroupPlayers(groupId: string) {
     .where(eq(groupPlayers.groupId, groupId));
 }
 
+/**
+ * Devuelve jugadores públicos para sincronizar (con settings del grupo).
+ * @returns Lista de jugadores candidatos a sync.
+ */
 export async function getPlayersForSync() {
   return db
     .select({
@@ -322,6 +383,10 @@ export async function getPlayersForSync() {
     .orderBy(desc(players.updatedAt));
 }
 
+/**
+ * Actualiza datos de ranked y estado de sync del jugador.
+ * @param params - Campos de actualización.
+ */
 export async function updatePlayerSync(params: {
   playerId: string;
   puuid?: string;
@@ -349,6 +414,10 @@ export async function updatePlayerSync(params: {
     .where(eq(players.id, params.playerId));
 }
 
+/**
+ * Inserta un snapshot histórico de ranked.
+ * @param params - Datos del snapshot.
+ */
 export async function insertRankSnapshot(params: {
   id: string;
   playerId: string;
@@ -373,6 +442,11 @@ export async function insertRankSnapshot(params: {
   });
 }
 
+/**
+ * Obtiene configuración de sincronización de un grupo.
+ * @param groupId - ID del grupo.
+ * @returns Settings del grupo o null.
+ */
 export async function getGroupSyncSettings(groupId: string) {
   return db.query.groups.findFirst({
     where: eq(groups.id, groupId),
@@ -384,6 +458,11 @@ export async function getGroupSyncSettings(groupId: string) {
   });
 }
 
+/**
+ * Busca grupos por IDs.
+ * @param groupIds - Lista de IDs.
+ * @returns Grupos encontrados.
+ */
 export async function findGroupsByIds(groupIds: string[]) {
   if (groupIds.length === 0) {
     return [];
@@ -394,6 +473,11 @@ export async function findGroupsByIds(groupIds: string[]) {
   });
 }
 
+/**
+ * Lista grupos a los que pertenece un jugador.
+ * @param playerId - ID del jugador.
+ * @returns IDs de grupos y su intervalo de sync.
+ */
 export async function getPlayerGroups(playerId: string) {
   return db
     .select({
@@ -405,9 +489,17 @@ export async function getPlayerGroups(playerId: string) {
     .where(eq(groupPlayers.playerId, playerId));
 }
 
+/**
+ * Lista jugadores con identidad definida pero sin PUUID.
+ * @returns Jugadores sin PUUID.
+ */
 export async function getPlayersNeedingPuuid() {
   return db.query.players.findMany({
-    where: and(isNotNull(players.gameName), isNotNull(players.tagLine)),
+    where: and(
+      isNull(players.puuid),
+      isNotNull(players.gameName),
+      isNotNull(players.tagLine),
+    ),
     columns: {
       id: true,
       gameName: true,

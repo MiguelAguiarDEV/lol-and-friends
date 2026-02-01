@@ -28,11 +28,16 @@ const divisionOrder: Record<string, number> = {
   IV: 0,
 };
 
+/**
+ * Calcula un puntaje numérico para ordenar jugadores por rango.
+ * @param params - Datos de rango.
+ * @returns Puntaje combinado (tier/división/LP).
+ */
 export function getRankScore(params: {
   tier?: string | null;
   division?: string | null;
   lp?: number | null;
-}) {
+}): number {
   const normalizedTier = params.tier
     ? params.tier.toUpperCase().replace(/\s+/g, "")
     : null;

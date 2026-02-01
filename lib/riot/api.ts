@@ -7,6 +7,11 @@ if (!apiKey) {
   logger.warn("Missing RIOT_API_KEY in environment");
 }
 
+/**
+ * Ejecuta una petición autenticada a la API de Riot y parsea JSON.
+ * @param url - URL completa del endpoint.
+ * @returns Respuesta tipada.
+ */
 async function riotFetch<T>(url: string): Promise<T> {
   const response = await fetch(url, {
     headers: {
@@ -46,6 +51,11 @@ export type RiotLeagueEntry = {
   losses: number;
 };
 
+/**
+ * Obtiene cuenta de Riot a partir de Riot ID (gameName + tag).
+ * @param params - Región y Riot ID.
+ * @returns Cuenta con PUUID.
+ */
 export async function getAccountByRiotId(params: {
   accountRegion: RiotAccountRegion;
   gameName: string;
@@ -57,6 +67,11 @@ export async function getAccountByRiotId(params: {
   return riotFetch<RiotAccount>(url);
 }
 
+/**
+ * Obtiene summoner por PUUID.
+ * @param params - Región de plataforma y PUUID.
+ * @returns Summoner con ID.
+ */
 export async function getSummonerByPuuid(params: {
   platformRegion: RiotPlatformRegion;
   puuid: string;
@@ -65,6 +80,11 @@ export async function getSummonerByPuuid(params: {
   return riotFetch<RiotSummoner>(url);
 }
 
+/**
+ * Obtiene entradas de liga por ID de summoner.
+ * @param params - Región de plataforma e ID de summoner.
+ * @returns Entradas de liga.
+ */
 export async function getLeagueEntriesBySummoner(params: {
   platformRegion: RiotPlatformRegion;
   summonerId: string;

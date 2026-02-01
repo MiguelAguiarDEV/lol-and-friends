@@ -3,7 +3,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import {
   addPlayerToGroup,
   createGroup,
@@ -22,35 +21,18 @@ import { normalizePlatformRegion, opggRegion } from "@/lib/riot/regions";
 import { syncGroupPlayers } from "@/lib/riot/sync";
 import { slugify, withSlugSuffix } from "@/lib/utils/slug";
 import { isPast } from "@/lib/utils/time";
+import {
+  createGroupSchema,
+  manualSyncSchema,
+  playerSchema,
+  removePlayerSchema,
+  settingsSchema,
+} from "@/lib/validations/admin";
 
-const createGroupSchema = z.object({
-  name: z.string().min(2),
-  syncIntervalMinutes: z.coerce.number().min(15).max(1440).default(360),
-  manualCooldownMinutes: z.coerce.number().min(5).max(240).default(30),
-});
-
-const settingsSchema = z.object({
-  groupId: z.string().min(1),
-  syncIntervalMinutes: z.coerce.number().min(15).max(1440),
-  manualCooldownMinutes: z.coerce.number().min(5).max(240),
-});
-
-const playerSchema = z.object({
-  groupId: z.string().min(1),
-  gameName: z.string().min(2),
-  tagLine: z.string().min(2),
-  region: z.string().min(2),
-});
-
-const removePlayerSchema = z.object({
-  groupId: z.string().min(1),
-  playerId: z.string().min(1),
-});
-
-const manualSyncSchema = z.object({
-  groupId: z.string().min(1),
-});
-
+/**
+ * Garantiza una sesión válida y sincroniza usuario en DB.
+ * @returns IDs de sesión.
+ */
 async function requireUser() {
   const { userId } = await auth();
   if (!userId) {
@@ -66,6 +48,10 @@ async function requireUser() {
   return { userId };
 }
 
+/**
+ * Valida que el usuario tenga acceso al grupo.
+ * @param params - IDs de usuario y grupo.
+ */
 async function assertGroupAccess(params: { userId: string; groupId: string }) {
   const groups = await getGroupsForUser(params.userId);
   const allowed = groups.some((group) => group.id === params.groupId);
@@ -74,6 +60,10 @@ async function assertGroupAccess(params: { userId: string; groupId: string }) {
   }
 }
 
+/**
+ * Crea un grupo público desde el panel admin.
+ * @param formData - Datos del formulario.
+ */
 export async function createGroupAction(formData: FormData) {
   const { userId } = await requireUser();
   const parsed = createGroupSchema.parse({
@@ -107,6 +97,10 @@ export async function createGroupAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+/**
+ * Actualiza settings del grupo.
+ * @param formData - Datos del formulario.
+ */
 export async function updateGroupSettingsAction(formData: FormData) {
   const { userId } = await requireUser();
   const parsed = settingsSchema.parse({
@@ -121,6 +115,10 @@ export async function updateGroupSettingsAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+/**
+ * Añade un jugador a un grupo.
+ * @param formData - Datos del formulario.
+ */
 export async function addPlayerAction(formData: FormData) {
   const { userId } = await requireUser();
   const parsed = playerSchema.parse({
@@ -158,6 +156,10 @@ export async function addPlayerAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+/**
+ * Quita un jugador de un grupo.
+ * @param formData - Datos del formulario.
+ */
 export async function removePlayerAction(formData: FormData) {
   const { userId } = await requireUser();
   const parsed = removePlayerSchema.parse({
@@ -171,6 +173,10 @@ export async function removePlayerAction(formData: FormData) {
   revalidatePath("/admin");
 }
 
+/**
+ * Ejecuta un sync manual con cooldown.
+ * @param formData - Datos del formulario.
+ */
 export async function manualSyncGroupAction(formData: FormData) {
   const { userId } = await requireUser();
   const parsed = manualSyncSchema.parse({

@@ -1,3 +1,4 @@
+/** Drizzle schema definitions for users, groups, players, and rank snapshots. */
 import { sql } from "drizzle-orm";
 import {
   index,

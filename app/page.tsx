@@ -9,6 +9,7 @@ type PublicGroup = {
   slug: string;
 };
 
+/** Página principal con listado de grupos públicos. */
 export default async function HomePage() {
   const groups = (await getPublicGroups()) as PublicGroup[];
 

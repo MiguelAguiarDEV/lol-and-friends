@@ -11,7 +11,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
   - Añadir / quitar jugadores (Riot ID + región).
   - Configurar intervalos de sync y cooldown manual.
   - Ejecutar sync manual (respetando cooldown).
-- **Sync automático** desde la API de Riot (Solo/Duo, EUW) usando **cron en Vercel**.
+- **Sync automático** desde la API de Riot (Solo/Duo, EUW) usando **cron en GitHub Actions**.
 - Métricas derivadas: `winrate` y `games` se calculan a partir de `wins/losses`.
 
 ## Rutas clave
@@ -92,17 +92,17 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - Admin avanzado (notas/objetivos/ediciones manuales más completas).
 
 ## Metodología de código / estándares
-- Funciones cortas: maximo 2 argumentos, usar Types/Structs/Interfaces como argumentos.
-- Funciones que manegen solo una funcionalidad. Pocas lineas de codigo por funcion.
+- Funciones cortas: máximo 2 argumentos; usar types/structs/interfaces como argumentos.
+- Funciones que manejen solo una funcionalidad. Pocas líneas de código por función.
 - Testing. Test coverage 70%.
-- Menos codigo mas calidad. mas funciones menos lineas por funcion.
-- En el frontend estructuras pequenas nada de arboles infinitos de divs.
-- Crear componentes configurables, maxima reutilizacion.
-- Todo componetizado.
-- Mientras menos librerias externas mejor. mientras mas simple el codigo mejor. nada de overengeeniring ni puzzles. Codigo limpio.
-- Usamos siempre TsDocs.
-- `docs/DEV.md` archivo en el que guadamos documentacion estructurada del proyecto, cada vez que se haga un edcion en la estructura de carpetas o funcionalidade editamos la documentacion, listamos las fucnines de cada archivo o documentacion corta de lo que hacer y para que sirve.
-- Frontend Mobile First. Enfocamos la responsividad en mobile ultra necesaria.
-- Nada de estilos ultra locos, algo sencillo, sin complicarnos, en un futuro iremos implementando mejoras.
-- Codigo ultra mantenimble, facil de editar, mejorar e implementar.
-- Coddigo abierto a futuras implementacjiones nada de codigo imposible de cambiar. usamos la mayoria de parametros posibles para cambiar funcionalidades con variables globales y cosas del estilo.
+- Menos código, más calidad. Más funciones, menos líneas por función.
+- En el frontend, estructuras pequeñas; nada de árboles infinitos de divs.
+- Crear componentes configurables, máxima reutilización.
+- Todo componentizado.
+- Mientras menos librerías externas, mejor. Mientras más simple el código, mejor. Nada de overengineering ni puzzles. Código limpio.
+- Usamos siempre TSDoc.
+- `docs/DEV.md` archivo en el que guardamos documentación estructurada del proyecto; cada vez que se haga una edición en la estructura de carpetas o funcionalidades, editamos la documentación, listamos las funciones de cada archivo o documentación corta de lo que hace y para qué sirve.
+- Frontend mobile-first. Enfocamos la responsividad en mobile ultra necesaria.
+- Nada de estilos ultra locos; algo sencillo, sin complicarnos. En un futuro iremos implementando mejoras.
+- Código ultra mantenible, fácil de editar, mejorar e implementar.
+- Código abierto a futuras implementaciones; nada de código imposible de cambiar. Usamos la mayoría de parámetros posibles para cambiar funcionalidades con variables globales y cosas del estilo.

@@ -26,6 +26,12 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Sincroniza jugadores cuyo intervalo de actualización ha expirado.
+ * @param params - Opciones de sincronización.
+ * @param params.limit - Máximo de jugadores a procesar.
+ * @returns Resumen con procesados y pendientes.
+ */
 export async function syncDuePlayers(params?: { limit?: number }) {
   const rows = await getPlayersForSync();
   const byPlayer = new Map<
@@ -87,6 +93,14 @@ export async function syncDuePlayers(params?: { limit?: number }) {
   };
 }
 
+/**
+ * Sincroniza jugadores de un grupo específico.
+ * @param params - Opciones de sincronización.
+ * @param params.groupId - ID del grupo.
+ * @param params.force - Si true, ignora intervalos y sincroniza todo.
+ * @param params.limit - Máximo de jugadores a procesar.
+ * @returns Resumen con procesados y pendientes.
+ */
 export async function syncGroupPlayers(params: {
   groupId: string;
   force?: boolean;
@@ -117,7 +131,7 @@ export async function syncGroupPlayers(params: {
       gameName: player.gameName,
       tagLine: player.tagLine,
       region: player.region,
-      puuid: null,
+      puuid: player.puuid ?? null,
       lastSyncAt: player.lastSyncAt ?? null,
       minInterval: settings.syncIntervalMinutes,
     });
@@ -154,9 +168,15 @@ async function syncPlayer(player: {
       puuid = account.puuid;
     }
 
+    if (!puuid) {
+      throw new Error(
+        `Missing PUUID for ${player.gameName}#${player.tagLine} (${player.region})`,
+      );
+    }
+
     const summoner = await getSummonerByPuuid({
       platformRegion,
-      puuid: puuid ?? "",
+      puuid,
     });
 
     const entries = await getLeagueEntriesBySummoner({
