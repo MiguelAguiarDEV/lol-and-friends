@@ -45,5 +45,12 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
 - Ejecutar: `node scripts/capture-screens.mjs`
 - Genera: `docs/screenshots/public-table-desktop.png` y `docs/screenshots/public-table-mobile.png`
 
+## Workflow frontend
+1. Implementar UI (desktop-first o mobile-first según caso).
+2. Verificar **responsividad** en mobile y desktop (breakpoints y overflow).
+3. Generar capturas Playwright (desktop + mobile).
+4. Revisar que **toda la información clave** sea visible en mobile sin perder columnas críticas.
+5. Adjuntar capturas en la PR (raw URLs) y describir el flujo de uso.
+
 ## Notas
 - Documentar cualquier cambio de estructura o nuevas responsabilidades aquí.
