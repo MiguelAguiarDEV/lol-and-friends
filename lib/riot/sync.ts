@@ -6,11 +6,7 @@ import {
   updatePlayerSync,
 } from "@/lib/db/queries";
 import { logger } from "@/lib/logger";
-import {
-  getAccountByRiotId,
-  getLeagueEntriesBySummoner,
-  getSummonerByPuuid,
-} from "@/lib/riot/api";
+import { getAccountByRiotId, getLeagueEntriesByPuuid } from "@/lib/riot/api";
 import {
   accountRegionForPlatform,
   normalizePlatformRegion,
@@ -174,14 +170,9 @@ async function syncPlayer(player: {
       );
     }
 
-    const summoner = await getSummonerByPuuid({
+    const entries = await getLeagueEntriesByPuuid({
       platformRegion,
       puuid,
-    });
-
-    const entries = await getLeagueEntriesBySummoner({
-      platformRegion,
-      summonerId: summoner.id,
     });
 
     const solo = entries.find((entry) => entry.queueType === QUEUE_SOLO);
