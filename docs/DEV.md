@@ -8,7 +8,10 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
   - `page.tsx` — vista pública (read-only)
   - `hello-world/page.tsx` — verificación de funcionamiento
 - `components/` — UI reutilizable (cuando se agregue)
+- `components/players/players-table.tsx` — tabla pública (read-only)
 - `lib/` — lógica de dominio, DB y validaciones (cuando se agregue)
+- `lib/players/` — mocks y métricas del dominio players
+- `lib/types/` — tipos compartidos del dominio
 - `docs/` — documentación viva
 - `tests/` — unit/integration (Jest)
 - `tests-e2e/` — e2e (Playwright)
