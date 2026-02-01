@@ -1,8 +1,11 @@
 import { createClient } from "@libsql/client";
+import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "@/lib/db/schema";
 
-let cachedDb: ReturnType<typeof drizzle> | null = null;
+type Db = LibSQLDatabase<typeof schema>;
+
+let cachedDb: Db | null = null;
 
 function getDb() {
   if (cachedDb) {
@@ -16,13 +19,13 @@ function getDb() {
 
   const authToken = process.env.TURSO_AUTH_TOKEN;
   const client = createClient({ url, authToken });
-  cachedDb = drizzle(client, { schema });
+  cachedDb = drizzle(client, { schema }) as Db;
   return cachedDb;
 }
 
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+export const db = new Proxy({} as Db, {
   get(_target, prop) {
-    const actual = getDb() as unknown as Record<PropertyKey, unknown>;
-    return actual[prop];
+    const actual = getDb();
+    return (actual as Db)[prop as keyof Db];
   },
 });
