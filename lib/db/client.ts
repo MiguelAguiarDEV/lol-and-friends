@@ -22,7 +22,7 @@ function getDb() {
 
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
   get(_target, prop) {
-    const actual = getDb() as Record<PropertyKey, unknown>;
+    const actual = getDb() as unknown as Record<PropertyKey, unknown>;
     return actual[prop];
   },
 });
