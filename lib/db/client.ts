@@ -6,6 +6,7 @@ import * as schema from "@/lib/db/schema";
 type Db = LibSQLDatabase<typeof schema>;
 
 let cachedDb: Db | null = null;
+let nullDb: Db | null = null;
 
 function getDb() {
   if (cachedDb) {
@@ -14,7 +15,11 @@ function getDb() {
 
   const url = process.env.TURSO_DATABASE_URL;
   if (!url) {
-    throw new Error("Missing TURSO_DATABASE_URL");
+    if (!nullDb) {
+      const client = createClient({ url: "file::memory:" });
+      nullDb = drizzle(client, { schema }) as Db;
+    }
+    return nullDb;
   }
 
   const authToken = process.env.TURSO_AUTH_TOKEN;
