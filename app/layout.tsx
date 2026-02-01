@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 const screenshotMode = process.env.SCREENSHOT_MODE === "true";
+const hasClerkKey = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+const enableClerk = !screenshotMode && hasClerkKey;
 
 export const metadata: Metadata = {
   title: "Reto LoL",
@@ -30,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {screenshotMode ? children : <ClerkProvider>{children}</ClerkProvider>}
+        {enableClerk ? <ClerkProvider>{children}</ClerkProvider> : children}
       </body>
     </html>
   );
