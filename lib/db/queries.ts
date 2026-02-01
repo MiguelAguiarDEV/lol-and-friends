@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
-import { db } from "@/lib/db/client";
+import { db, isDbConfigured } from "@/lib/db/client";
 import {
   groupMembers,
   groupPlayers,
@@ -86,6 +86,10 @@ export async function getPublicGroups() {
     return [screenshotGroup];
   }
 
+  if (!isDbConfigured()) {
+    return [];
+  }
+
   return db.query.groups.findMany({
     where: eq(groups.isPublic, true),
     orderBy: desc(groups.createdAt),
@@ -93,6 +97,10 @@ export async function getPublicGroups() {
 }
 
 export async function getGroupsForUser(userId: string) {
+  if (!isDbConfigured()) {
+    return [];
+  }
+
   return db
     .selectDistinct({
       id: groups.id,
@@ -121,6 +129,10 @@ export async function getGroupBySlug(slug: string) {
     }
 
     return { group: screenshotGroup, players: screenshotPlayers };
+  }
+
+  if (!isDbConfigured()) {
+    return null;
   }
 
   const group = await db.query.groups.findFirst({

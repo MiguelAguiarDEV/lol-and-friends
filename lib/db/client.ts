@@ -8,13 +8,17 @@ type Db = LibSQLDatabase<typeof schema>;
 let cachedDb: Db | null = null;
 let nullDb: Db | null = null;
 
+export function isDbConfigured() {
+  return Boolean(process.env.TURSO_DATABASE_URL);
+}
+
 function getDb() {
   if (cachedDb) {
     return cachedDb;
   }
 
   const url = process.env.TURSO_DATABASE_URL;
-  if (!url) {
+  if (!isDbConfigured()) {
     if (!nullDb) {
       const client = createClient({ url: "file::memory:" });
       nullDb = drizzle(client, { schema }) as Db;
