@@ -13,6 +13,7 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
 - `lib/players/` — mocks y métricas del dominio players
 - `lib/types/` — tipos compartidos del dominio
 - `docs/` — documentación viva
+- `docs/screenshots/` — capturas de la UI (Playwright)
 - `tests/` — unit/integration (Jest)
 - `tests-e2e/` — e2e (Playwright)
 
@@ -39,6 +40,10 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
   - `pre-commit`: `bun run lint && bun run test`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Para bloquear merges sin checks verdes, configurar Branch Protection en GitHub.
+
+## Screenshots (Playwright)
+- Ejecutar: `node scripts/capture-screens.mjs`
+- Genera: `docs/screenshots/public-table-desktop.png` y `docs/screenshots/public-table-mobile.png`
 
 ## Notas
 - Documentar cualquier cambio de estructura o nuevas responsabilidades aquí.
