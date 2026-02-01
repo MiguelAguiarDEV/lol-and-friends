@@ -18,7 +18,7 @@ function getDb() {
   }
 
   const url = process.env.TURSO_DATABASE_URL;
-  if (!isDbConfigured()) {
+  if (!url) {
     if (!nullDb) {
       const client = createClient({ url: "file::memory:" });
       nullDb = drizzle(client, { schema }) as Db;
