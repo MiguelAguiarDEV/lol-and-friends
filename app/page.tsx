@@ -3,8 +3,14 @@ import { getPublicGroups } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
+type PublicGroup = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 export default async function HomePage() {
-  const groups = await getPublicGroups();
+  const groups = (await getPublicGroups()) as PublicGroup[];
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-10 text-gray-900 sm:px-6">
