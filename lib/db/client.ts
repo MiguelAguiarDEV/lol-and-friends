@@ -27,9 +27,12 @@ function getDb() {
   }
 
   const authToken = process.env.TURSO_AUTH_TOKEN;
-  const client = authToken
-    ? createClient({ url, authToken })
-    : createClient({ url });
+  let client: ReturnType<typeof createClient>;
+  if (authToken === undefined) {
+    client = createClient({ url });
+  } else {
+    client = createClient({ url, authToken });
+  }
   cachedDb = drizzle(client, { schema }) as Db;
   return cachedDb;
 }
