@@ -46,7 +46,7 @@
     "unrs-resolver"
   ],
   "simple-git-hooks": {
-    "pre-commit": "bun run lint",
+    "pre-commit": "bun run lint && bun run test",
     "pre-push": "bun run lint && bun run test && bun run build && bun run test:e2e"
   }
 }

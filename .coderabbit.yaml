@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "es-ES"
+tone_instructions: "Directo, conciso y enfocado en bugs/regresiones."
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  review_status: true
+  commit_status: true
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    ignore_title_keywords:
+      - "WIP"
+      - "DRAFT"
+      - "[skip cr]"

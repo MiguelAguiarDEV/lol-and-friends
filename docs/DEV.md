@@ -27,14 +27,14 @@ Proyecto Next.js (App Router) para el reto LoL. La ruta inicial de verificación
 ## Testing
 - Unit/Integration: Jest + Testing Library
 - E2E Frontend: Playwright
-- Configuración: `jest.config.ts`, `jest.setup.ts`, `playwright.config.ts`
+- Configuración: `jest.config.mjs`, `jest.setup.ts`, `playwright.config.ts`
  - Nota: correr `bunx playwright install` la primera vez para descargar navegadores.
 
 ## CI/CD y hooks
-- GitHub Actions: `.github/workflows/ci.yml` ejecuta lint/test/build en push y PR.
+- GitHub Actions: `.github/workflows/ci.yml` ejecuta lint/test/build/test:e2e en push y PR.
 - Hooks locales (simple-git-hooks):
-  - `pre-commit`: `bun run lint`
-  - `pre-push`: `bun run lint && bun run test && bun run build`
+  - `pre-commit`: `bun run lint && bun run test`
+  - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Para bloquear merges sin checks verdes, configurar Branch Protection en GitHub.
 
 ## Notas

@@ -35,7 +35,7 @@ docs/
   DEV.md # Documentación viva del proyecto (estructura y responsabilidades)
 tests/ # Unit/Integration tests (Jest)
 tests-e2e/ # E2E tests (Playwright)
-jest.config.ts # Configuración de Jest (next/jest)
+jest.config.mjs # Configuración de Jest (next/jest)
 jest.setup.ts # Setup de Testing Library
 playwright.config.ts # Configuración de Playwright
 
@@ -77,7 +77,7 @@ playwright.config.ts # Configuración de Playwright
 
 - **GitHub Actions**: `.github/workflows/ci.yml` corre `lint`, `test`, `build` y `test:e2e` en push/PR.
 - **Hooks locales** (simple-git-hooks):
-  - `pre-commit`: `bun run lint`
+  - `pre-commit`: `bun run lint && bun run test`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Recomendación: activar *Branch Protection Rules* en GitHub para exigir checks verdes antes de merge.
 

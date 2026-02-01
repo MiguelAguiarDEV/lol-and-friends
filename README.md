@@ -97,7 +97,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 ## CI/CD y calidad
 - **GitHub Actions**: `.github/workflows/ci.yml` ejecuta `lint`, `test`, `build` y `test:e2e` en cada push y PR.
 - **Hooks locales** (simple-git-hooks):
-  - `pre-commit`: `bun run lint`
+  - `pre-commit`: `bun run lint && bun run test`
   - `pre-push`: `bun run lint && bun run test && bun run build && bun run test:e2e`
 - Para **bloquear merges** sin checks verdes, configurar *Branch Protection Rules* en GitHub para exigir el workflow de CI.
 
