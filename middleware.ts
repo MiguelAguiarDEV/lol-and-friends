@@ -8,8 +8,7 @@ const middleware = screenshotMode
   ? (_req: NextRequest) => NextResponse.next()
   : clerkMiddleware(async (auth, req) => {
       if (isProtectedRoute(req)) {
-        const session = await auth();
-        session.protect();
+        auth.protect();
       }
     });
 
