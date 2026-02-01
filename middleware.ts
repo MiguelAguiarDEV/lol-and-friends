@@ -6,9 +6,10 @@ const screenshotMode = process.env.SCREENSHOT_MODE === "true";
 
 const middleware = screenshotMode
   ? (_req: NextRequest) => NextResponse.next()
-  : clerkMiddleware((auth, req) => {
+  : clerkMiddleware(async (auth, req) => {
       if (isProtectedRoute(req)) {
-        auth().protect();
+        const session = await auth();
+        session.protect();
       }
     });
 
