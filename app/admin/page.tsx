@@ -26,9 +26,14 @@ export default async function AdminPage() {
   });
 
   const groups = await getGroupsForUser(userId);
-  const playersByGroup = new Map(
+  const playersByGroup = new Map<
+    string,
+    Awaited<ReturnType<typeof getGroupPlayers>>
+  >(
     await Promise.all(
-      groups.map(async (group) => [group.id, await getGroupPlayers(group.id)]),
+      groups.map(
+        async (group) => [group.id, await getGroupPlayers(group.id)] as const,
+      ),
     ),
   );
 
