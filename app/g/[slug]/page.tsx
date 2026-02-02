@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { publicSyncGroupAction } from "@/app/g/[slug]/actions";
 import { PlayersTable } from "@/components/players/players-table";
 import { getGroupBySlug } from "@/lib/db/queries";
+import { isPast, minutesToMs } from "@/lib/utils/time";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,19 @@ export default async function GroupPage({
     notFound();
   }
 
+  const publicCooldownMinutes = 1;
+  const canSync = isPast({
+    timestamp: data.group.lastManualSyncAt,
+    minMinutes: publicCooldownMinutes,
+  });
+  const remainingMs = data.group.lastManualSyncAt
+    ? Math.max(
+        0,
+        minutesToMs(publicCooldownMinutes) -
+          (Date.now() - Date.parse(data.group.lastManualSyncAt)),
+      )
+    : 0;
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
   const sort = normalizeSort(resolvedSearchParams?.sort);
   const sortOptions = [
     { value: "winrate", label: "Winrate" },
@@ -64,9 +78,16 @@ export default async function GroupPage({
             <input type="hidden" name="groupId" value={data.group.id} />
             <button
               type="submit"
-              className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700"
+              disabled={!canSync}
+              className={`rounded-md border px-3 py-2 text-xs font-medium ${
+                canSync
+                  ? "border-gray-200 bg-white text-gray-700"
+                  : "cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400"
+              }`}
             >
-              Actualizar ahora
+              {canSync
+                ? "Actualizar ahora"
+                : `Disponible en ${remainingSeconds}s`}
             </button>
           </form>
         </div>
