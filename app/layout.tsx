@@ -33,6 +33,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {enableClerk ? <ClerkProvider>{children}</ClerkProvider> : children}
+        <a
+          href="https://github.com/MiguelAguiarDEV/lol-and-friends/issues"
+          target="_blank"
+          rel="noreferrer"
+          className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white/95 px-3 py-2 text-xs font-semibold text-gray-900 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:bg-white hover:shadow-md active:translate-y-0 active:shadow-sm"
+        >
+          Feedback
+          <span className="text-[10px] font-medium text-gray-500">Issues</span>
+        </a>
       </body>
     </html>
   );
