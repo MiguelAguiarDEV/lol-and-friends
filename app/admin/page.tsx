@@ -7,8 +7,10 @@ import {
   updateGroupSettingsAction,
 } from "@/app/admin/actions";
 import { GroupsTable } from "@/app/admin/groups-table";
+import { isAdminEmail } from "@/lib/auth/admin";
 import {
   ensureUser,
+  getAllGroups,
   getGroupPlayers,
   getGroupsForUser,
 } from "@/lib/db/queries";
@@ -21,12 +23,16 @@ export default async function AdminPage() {
   }
 
   const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
   await ensureUser({
     id: userId,
-    email: user?.primaryEmailAddress?.emailAddress,
+    email,
   });
 
-  const groups = await getGroupsForUser(userId);
+  const isAdmin = isAdminEmail(email);
+  const groups = isAdmin
+    ? await getAllGroups()
+    : await getGroupsForUser(userId);
   const playersByGroup = new Map<
     string,
     Awaited<ReturnType<typeof getGroupPlayers>>

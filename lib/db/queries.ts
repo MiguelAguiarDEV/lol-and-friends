@@ -133,6 +133,20 @@ export async function getGroupsForUser(userId: string) {
     .orderBy(desc(groups.createdAt));
 }
 
+/**
+ * Lista todos los grupos (solo para admin).
+ * @returns Todos los grupos.
+ */
+export async function getAllGroups() {
+  if (!isDbConfigured()) {
+    return [];
+  }
+
+  return db.query.groups.findMany({
+    orderBy: desc(groups.createdAt),
+  });
+}
+
 function orOwnerOrMember(params: { userId: string }) {
   return sql`(${groups.ownerId} = ${params.userId} OR ${groupMembers.userId} = ${params.userId})`;
 }

@@ -1,12 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
+import { hasAdminAllowlist, isAdminEmail } from "@/lib/auth/admin";
 
 const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
 const screenshotMode = process.env.SCREENSHOT_MODE === "true";
-const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((email) => email.trim().toLowerCase())
-  .filter(Boolean);
 
 /**
  * Middleware de Clerk para proteger rutas admin y aplicar allowlist por email.
@@ -21,15 +18,12 @@ const middleware = screenshotMode
       }
 
       const authObject = await auth.protect();
-      if (adminEmails.length === 0) {
+      if (!hasAdminAllowlist()) {
         return;
       }
 
       const email = authObject.sessionClaims?.email;
-      const normalizedEmail =
-        typeof email === "string" ? email.toLowerCase() : "";
-
-      if (!normalizedEmail || !adminEmails.includes(normalizedEmail)) {
+      if (!isAdminEmail(typeof email === "string" ? email : null)) {
         return NextResponse.redirect(new URL("/", req.url));
       }
     });

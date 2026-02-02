@@ -3,6 +3,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isAdminEmail } from "@/lib/auth/admin";
 import {
   addPlayerToGroup,
   createGroup,
@@ -40,12 +41,13 @@ async function requireUser() {
   }
 
   const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress ?? null;
   await ensureUser({
     id: userId,
-    email: user?.primaryEmailAddress?.emailAddress,
+    email,
   });
 
-  return { userId };
+  return { userId, isAdmin: isAdminEmail(email) };
 }
 
 /**
@@ -102,14 +104,16 @@ export async function createGroupAction(formData: FormData) {
  * @param formData - Datos del formulario.
  */
 export async function updateGroupSettingsAction(formData: FormData) {
-  const { userId } = await requireUser();
+  const { userId, isAdmin } = await requireUser();
   const parsed = settingsSchema.parse({
     groupId: formData.get("groupId"),
     syncIntervalMinutes: formData.get("syncIntervalMinutes"),
     manualCooldownMinutes: formData.get("manualCooldownMinutes"),
   });
 
-  await assertGroupAccess({ userId, groupId: parsed.groupId });
+  if (!isAdmin) {
+    await assertGroupAccess({ userId, groupId: parsed.groupId });
+  }
   await updateGroupSettings(parsed);
 
   revalidatePath("/admin");
@@ -120,7 +124,7 @@ export async function updateGroupSettingsAction(formData: FormData) {
  * @param formData - Datos del formulario.
  */
 export async function addPlayerAction(formData: FormData) {
-  const { userId } = await requireUser();
+  const { userId, isAdmin } = await requireUser();
   const parsed = playerSchema.parse({
     groupId: formData.get("groupId"),
     gameName: formData.get("gameName"),
@@ -129,7 +133,9 @@ export async function addPlayerAction(formData: FormData) {
     queueType: formData.get("queueType"),
   });
 
-  await assertGroupAccess({ userId, groupId: parsed.groupId });
+  if (!isAdmin) {
+    await assertGroupAccess({ userId, groupId: parsed.groupId });
+  }
   const region = normalizePlatformRegion(parsed.region);
 
   let player = await findPlayerByIdentity({
@@ -163,13 +169,15 @@ export async function addPlayerAction(formData: FormData) {
  * @param formData - Datos del formulario.
  */
 export async function removePlayerAction(formData: FormData) {
-  const { userId } = await requireUser();
+  const { userId, isAdmin } = await requireUser();
   const parsed = removePlayerSchema.parse({
     groupId: formData.get("groupId"),
     playerId: formData.get("playerId"),
   });
 
-  await assertGroupAccess({ userId, groupId: parsed.groupId });
+  if (!isAdmin) {
+    await assertGroupAccess({ userId, groupId: parsed.groupId });
+  }
   await removePlayerFromGroup(parsed);
 
   revalidatePath("/admin");
@@ -180,12 +188,14 @@ export async function removePlayerAction(formData: FormData) {
  * @param formData - Datos del formulario.
  */
 export async function manualSyncGroupAction(formData: FormData) {
-  const { userId } = await requireUser();
+  const { userId, isAdmin } = await requireUser();
   const parsed = manualSyncSchema.parse({
     groupId: formData.get("groupId"),
   });
 
-  await assertGroupAccess({ userId, groupId: parsed.groupId });
+  if (!isAdmin) {
+    await assertGroupAccess({ userId, groupId: parsed.groupId });
+  }
   const settings = await getGroupSyncSettings(parsed.groupId);
   if (!settings) {
     return;
