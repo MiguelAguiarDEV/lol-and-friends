@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { publicSyncGroupAction } from "@/app/g/[slug]/actions";
 import { PlayersTable } from "@/components/players/players-table";
 import { getGroupBySlug } from "@/lib/db/queries";
 
@@ -59,7 +60,17 @@ export default async function GroupPage({
               ))}
             </div>
           </div>
+          <form action={publicSyncGroupAction} className="flex items-center">
+            <input type="hidden" name="groupId" value={data.group.id} />
+            <button
+              type="submit"
+              className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700"
+            >
+              Actualizar ahora
+            </button>
+          </form>
         </div>
+        <p className="text-xs text-gray-500">Cooldown público: 1 minuto.</p>
 
         <PlayersTable
           players={data.players.map((player) => ({

@@ -64,6 +64,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - Manual sync desde `/admin` con cooldown configurable.
 - Cola y región seleccionables desde admin (cola por jugador).
 - Reintentos con backoff cuando hay rate limit (429).
+- Botón público en `/g/[slug]` (cooldown 1 min).
 
 ## Screenshots (Playwright)
 - Ejecutar: `node scripts/capture-screens.mjs`

@@ -189,6 +189,26 @@ export async function getGroupBySlug(slug: string) {
 }
 
 /**
+ * Obtiene un grupo público por ID (sin jugadores).
+ * @param groupId - ID del grupo.
+ * @returns Grupo público o null.
+ */
+export async function getPublicGroupById(groupId: string) {
+  if (!isDbConfigured()) {
+    return null;
+  }
+
+  return db.query.groups.findFirst({
+    where: and(eq(groups.id, groupId), eq(groups.isPublic, true)),
+    columns: {
+      id: true,
+      slug: true,
+      isPublic: true,
+    },
+  });
+}
+
+/**
  * Crea un grupo y registra al owner como miembro.
  * @param params - Datos de creación del grupo.
  * @returns El grupo creado.

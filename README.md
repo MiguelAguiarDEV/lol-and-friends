@@ -6,6 +6,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 ## MVP actual
 - **Home pública** con listado de **grupos públicos**.
 - **Página de grupo** `/g/[slug]` con tabla read-only y ordenación (winrate, rango, LP, actualización).
+- **Sync público** en `/g/[slug]` con botón manual (cooldown 1 min).
 - **Panel admin** `/admin` con **Clerk** para:
   - Crear grupos públicos.
   - Añadir / quitar jugadores (Riot ID + región).
