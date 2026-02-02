@@ -14,7 +14,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `components/players/players-table.tsx` — tabla + cards mobile
 - `lib/db/` — cliente, schema y queries (Drizzle)
   - `migrations/` — migraciones generadas
-- `lib/riot/` — API, regiones y lógica de sync
+- `lib/riot/` — API, regiones, colas y lógica de sync
 - `lib/players/` — métricas y ranking
 - `lib/utils/` — helpers (slug/time)
 - `docs/screenshots/` — capturas UI (Playwright)
@@ -38,6 +38,8 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `RIOT_API_KEY`
+- `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
+- `RIOT_ACCEPT_LANGUAGE` (opcional)
 - `CRON_SECRET` (opcional)
 - `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
 
@@ -60,6 +62,9 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - Cron en GitHub Actions cada 10 minutos.
 - Sync incremental por lotes (no actualiza todo a la vez).
 - Manual sync desde `/admin` con cooldown configurable.
+- Cola y región seleccionables desde admin (cola por jugador).
+- Reintentos con backoff cuando hay rate limit (429).
+- Botón público en `/g/[slug]` (cooldown 1 min).
 
 ## Screenshots (Playwright)
 - Ejecutar: `node scripts/capture-screens.mjs`

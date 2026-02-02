@@ -1,17 +1,20 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
-  addPlayerAction,
   createGroupAction,
   manualSyncGroupAction,
   removePlayerAction,
   updateGroupSettingsAction,
 } from "@/app/admin/actions";
+import { GroupsTable } from "@/app/admin/groups-table";
+import { isAdminEmail } from "@/lib/auth/admin";
 import {
   ensureUser,
+  getAllGroups,
   getGroupPlayers,
   getGroupsForUser,
 } from "@/lib/db/queries";
+import { getQueueLabel } from "@/lib/riot/queues";
 
 export default async function AdminPage() {
   const { userId } = await auth();
@@ -20,12 +23,16 @@ export default async function AdminPage() {
   }
 
   const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress ?? undefined;
   await ensureUser({
     id: userId,
-    email: user?.primaryEmailAddress?.emailAddress,
+    email,
   });
 
-  const groups = await getGroupsForUser(userId);
+  const isAdmin = isAdminEmail(email);
+  const groups = isAdmin
+    ? await getAllGroups()
+    : await getGroupsForUser(userId);
   const playersByGroup = new Map<
     string,
     Awaited<ReturnType<typeof getGroupPlayers>>
@@ -81,7 +88,8 @@ export default async function AdminPage() {
                 id="group-sync-interval"
                 name="syncIntervalMinutes"
                 type="number"
-                min={15}
+                min={0.5}
+                step={0.5}
                 max={1440}
                 defaultValue={360}
                 className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
@@ -114,86 +122,25 @@ export default async function AdminPage() {
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Añadir jugador
-          </h2>
-          <form
-            action={addPlayerAction}
-            className="mt-4 grid gap-4 sm:grid-cols-5"
-          >
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="player-group"
-                className="text-xs font-medium text-gray-500"
-              >
-                Grupo
-              </label>
-              <select
-                id="player-group"
-                name="groupId"
-                className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                required
-              >
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <label
-                htmlFor="player-game-name"
-                className="text-xs font-medium text-gray-500"
-              >
-                Riot ID
-              </label>
-              <input
-                id="player-game-name"
-                name="gameName"
-                required
-                className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                placeholder="GameName"
-              />
+              <h2 className="text-lg font-semibold text-gray-900">Grupos</h2>
+              <p className="text-sm text-gray-600">
+                Selecciona un grupo para añadir jugadores.
+              </p>
             </div>
-            <div>
-              <label
-                htmlFor="player-tag"
-                className="text-xs font-medium text-gray-500"
-              >
-                Tag
-              </label>
-              <input
-                id="player-tag"
-                name="tagLine"
-                required
-                className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                placeholder="EUW"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="player-region"
-                className="text-xs font-medium text-gray-500"
-              >
-                Región
-              </label>
-              <select
-                id="player-region"
-                name="region"
-                className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                defaultValue="euw1"
-              >
-                <option value="euw1">EUW</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white sm:col-span-5 sm:w-fit"
-            >
-              Añadir jugador
-            </button>
-          </form>
+          </div>
+          <div className="mt-4">
+            <GroupsTable
+              groups={groups.map((group) => ({
+                id: group.id,
+                name: group.name,
+                slug: group.slug,
+                playersCount: playersByGroup.get(group.id)?.length ?? 0,
+                syncIntervalMinutes: group.syncIntervalMinutes ?? null,
+              }))}
+            />
+          </div>
         </section>
 
         {groups.map((group) => {
@@ -240,7 +187,8 @@ export default async function AdminPage() {
                     id={syncId}
                     name="syncIntervalMinutes"
                     type="number"
-                    min={15}
+                    min={0.5}
+                    step={0.5}
                     max={1440}
                     defaultValue={group.syncIntervalMinutes ?? 360}
                     className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
@@ -289,8 +237,9 @@ export default async function AdminPage() {
                             {player.gameName}#{player.tagLine}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {player.region.toUpperCase()} · {player.tier ?? "—"}{" "}
-                            {player.division ?? ""}
+                            {player.region.toUpperCase()} ·{" "}
+                            {getQueueLabel(player.queueType)} ·{" "}
+                            {player.tier ?? "—"} {player.division ?? ""}
                           </div>
                         </div>
                         <form action={removePlayerAction}>

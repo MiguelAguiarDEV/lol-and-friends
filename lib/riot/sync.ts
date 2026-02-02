@@ -6,7 +6,12 @@ import {
   updatePlayerSync,
 } from "@/lib/db/queries";
 import { logger } from "@/lib/logger";
-import { getAccountByRiotId, getLeagueEntriesByPuuid } from "@/lib/riot/api";
+import {
+  getAccountByRiotId,
+  getLeagueEntriesByPuuid,
+  RiotRateLimitError,
+} from "@/lib/riot/api";
+import type { RiotQueueType } from "@/lib/riot/queues";
 import {
   accountRegionForPlatform,
   normalizePlatformRegion,
@@ -16,10 +21,38 @@ import { isPast, nowIso } from "@/lib/utils/time";
 
 const QUEUE_SOLO = "RANKED_SOLO_5x5";
 const DEFAULT_BATCH_SIZE = 5;
-const API_DELAY_MS = 250;
+const API_DELAY_MS = 350;
+const RATE_LIMIT_RETRIES = 2;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRateLimitRetry<T>(
+  fn: () => Promise<T>,
+  context: Record<string, unknown>,
+) {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof RiotRateLimitError && attempt < RATE_LIMIT_RETRIES) {
+        const waitSeconds = Math.max(1, error.retryAfterSeconds);
+        const jitter = Math.floor(Math.random() * 250);
+        logger.warn("Riot rate limit hit, retrying", {
+          ...context,
+          attempt,
+          retryAfterSeconds: waitSeconds,
+          limitType: error.limitType,
+        });
+        await sleep(waitSeconds * 1000 + jitter);
+        attempt += 1;
+        continue;
+      }
+      throw error;
+    }
+  }
 }
 
 /**
@@ -37,6 +70,7 @@ export async function syncDuePlayers(params?: { limit?: number }) {
       gameName: string;
       tagLine: string;
       region: string;
+      queueType: RiotQueueType;
       puuid: string | null;
       lastSyncAt: string | null;
       minInterval: number;
@@ -51,6 +85,7 @@ export async function syncDuePlayers(params?: { limit?: number }) {
         gameName: row.gameName,
         tagLine: row.tagLine,
         region: row.region,
+        queueType: (row.queueType ?? QUEUE_SOLO) as RiotQueueType,
         puuid: row.puuid ?? null,
         lastSyncAt: row.lastSyncAt ?? null,
         minInterval: row.syncIntervalMinutes,
@@ -127,6 +162,7 @@ export async function syncGroupPlayers(params: {
       gameName: player.gameName,
       tagLine: player.tagLine,
       region: player.region,
+      queueType: (player.queueType ?? QUEUE_SOLO) as RiotQueueType,
       puuid: player.puuid ?? null,
       lastSyncAt: player.lastSyncAt ?? null,
       minInterval: settings.syncIntervalMinutes,
@@ -145,6 +181,7 @@ async function syncPlayer(player: {
   gameName: string;
   tagLine: string;
   region: string;
+  queueType: RiotQueueType;
   puuid: string | null;
   lastSyncAt: string | null;
   minInterval: number;
@@ -156,11 +193,19 @@ async function syncPlayer(player: {
   try {
     let puuid = player.puuid;
     if (!puuid) {
-      const account = await getAccountByRiotId({
-        accountRegion,
-        gameName: player.gameName,
-        tagLine: player.tagLine,
-      });
+      const account = await withRateLimitRetry(
+        () =>
+          getAccountByRiotId({
+            accountRegion,
+            gameName: player.gameName,
+            tagLine: player.tagLine,
+          }),
+        {
+          playerId: player.id,
+          action: "getAccountByRiotId",
+          region: player.region,
+        },
+      );
       puuid = account.puuid;
     }
 
@@ -170,12 +215,21 @@ async function syncPlayer(player: {
       );
     }
 
-    const entries = await getLeagueEntriesByPuuid({
-      platformRegion,
-      puuid,
-    });
+    const entries = await withRateLimitRetry(
+      () =>
+        getLeagueEntriesByPuuid({
+          platformRegion,
+          puuid,
+        }),
+      {
+        playerId: player.id,
+        action: "getLeagueEntriesByPuuid",
+        region: player.region,
+      },
+    );
 
-    const solo = entries.find((entry) => entry.queueType === QUEUE_SOLO);
+    const queueType = player.queueType ?? QUEUE_SOLO;
+    const solo = entries.find((entry) => entry.queueType === queueType);
 
     await updatePlayerSync({
       playerId: player.id,
@@ -194,7 +248,7 @@ async function syncPlayer(player: {
     await insertRankSnapshot({
       id: crypto.randomUUID(),
       playerId: player.id,
-      queueType: QUEUE_SOLO,
+      queueType,
       tier: solo?.tier ?? null,
       division: solo?.rank ?? null,
       lp: solo?.leaguePoints ?? null,
@@ -207,6 +261,7 @@ async function syncPlayer(player: {
       playerId: player.id,
       gameName: player.gameName,
       tagLine: player.tagLine,
+      queueType,
     });
   } catch (error) {
     logger.error("Riot sync failed", {

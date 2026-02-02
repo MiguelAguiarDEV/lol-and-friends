@@ -6,12 +6,14 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 ## MVP actual
 - **Home pública** con listado de **grupos públicos**.
 - **Página de grupo** `/g/[slug]` con tabla read-only y ordenación (winrate, rango, LP, actualización).
+- **Sync público** en `/g/[slug]` con botón manual (cooldown 1 min).
 - **Panel admin** `/admin` con **Clerk** para:
   - Crear grupos públicos.
   - Añadir / quitar jugadores (Riot ID + región).
   - Configurar intervalos de sync y cooldown manual.
+  - Seleccionar cola (Solo/Duo o Flex) por jugador.
   - Ejecutar sync manual (respetando cooldown).
-- **Sync automático** desde la API de Riot (Solo/Duo, EUW) usando **cron en GitHub Actions**.
+- **Sync automático** desde la API de Riot (cola configurable, región por jugador) usando **cron en GitHub Actions**.
 - Métricas derivadas: `winrate` y `games` se calculan a partir de `wins/losses`.
 
 ## Rutas clave
@@ -70,6 +72,8 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `RIOT_API_KEY`
+- `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
+- `RIOT_ACCEPT_LANGUAGE` (opcional)
 - `CRON_SECRET` (opcional, si quieres proteger `/api/sync` con token)
 - `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
 

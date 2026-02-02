@@ -15,4 +15,14 @@ describe("riot regions", () => {
     expect(accountRegionForPlatform(platform)).toBe("europe");
     expect(opggRegion(platform)).toBe("euw");
   });
+
+  it("maps NA and EUNE", () => {
+    expect(normalizePlatformRegion("na")).toBe("na1");
+    expect(accountRegionForPlatform("na1")).toBe("americas");
+    expect(opggRegion("na1")).toBe("na");
+
+    expect(normalizePlatformRegion("eune")).toBe("eun1");
+    expect(accountRegionForPlatform("eun1")).toBe("europe");
+    expect(opggRegion("eun1")).toBe("eune");
+  });
 });

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { publicSyncGroupAction } from "@/app/g/[slug]/actions";
+import { PublicSyncButton } from "@/app/g/[slug]/public-sync-button";
 import { PlayersTable } from "@/components/players/players-table";
 import { getGroupBySlug } from "@/lib/db/queries";
 
@@ -21,6 +23,7 @@ export default async function GroupPage({
     notFound();
   }
 
+  const publicCooldownMinutes = 1;
   const sort = normalizeSort(resolvedSearchParams?.sort);
   const sortOptions = [
     { value: "winrate", label: "Winrate" },
@@ -59,7 +62,15 @@ export default async function GroupPage({
               ))}
             </div>
           </div>
+          <form action={publicSyncGroupAction} className="flex items-center">
+            <input type="hidden" name="groupId" value={data.group.id} />
+            <PublicSyncButton
+              lastManualSyncAt={data.group.lastManualSyncAt}
+              cooldownMinutes={publicCooldownMinutes}
+            />
+          </form>
         </div>
+        <p className="text-xs text-gray-500">Cooldown público: 1 minuto.</p>
 
         <PlayersTable
           players={data.players.map((player) => ({

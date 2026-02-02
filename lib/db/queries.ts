@@ -133,6 +133,20 @@ export async function getGroupsForUser(userId: string) {
     .orderBy(desc(groups.createdAt));
 }
 
+/**
+ * Lista todos los grupos (solo para admin).
+ * @returns Todos los grupos.
+ */
+export async function getAllGroups() {
+  if (!isDbConfigured()) {
+    return [];
+  }
+
+  return db.query.groups.findMany({
+    orderBy: desc(groups.createdAt),
+  });
+}
+
 function orOwnerOrMember(params: { userId: string }) {
   return sql`(${groups.ownerId} = ${params.userId} OR ${groupMembers.userId} = ${params.userId})`;
 }
@@ -186,6 +200,26 @@ export async function getGroupBySlug(slug: string) {
     .orderBy(desc(players.updatedAt));
 
   return { group, players: playerRows };
+}
+
+/**
+ * Obtiene un grupo público por ID (sin jugadores).
+ * @param groupId - ID del grupo.
+ * @returns Grupo público o null.
+ */
+export async function getPublicGroupById(groupId: string) {
+  if (!isDbConfigured()) {
+    return null;
+  }
+
+  return db.query.groups.findFirst({
+    where: and(eq(groups.id, groupId), eq(groups.isPublic, true)),
+    columns: {
+      id: true,
+      slug: true,
+      isPublic: true,
+    },
+  });
 }
 
 /**
@@ -283,6 +317,7 @@ export async function createPlayer(params: {
   gameName: string;
   tagLine: string;
   region: string;
+  queueType?: string;
   opggUrl?: string;
 }) {
   await db.insert(players).values({
@@ -290,6 +325,7 @@ export async function createPlayer(params: {
     gameName: params.gameName,
     tagLine: params.tagLine,
     region: params.region,
+    queueType: params.queueType ?? "RANKED_SOLO_5x5",
     opggUrl: params.opggUrl,
   });
 
@@ -343,6 +379,7 @@ export async function getGroupPlayers(groupId: string) {
       gameName: players.gameName,
       tagLine: players.tagLine,
       region: players.region,
+      queueType: players.queueType,
       puuid: players.puuid,
       opggUrl: players.opggUrl,
       tier: players.tier,
@@ -371,6 +408,7 @@ export async function getPlayersForSync() {
       gameName: players.gameName,
       tagLine: players.tagLine,
       region: players.region,
+      queueType: players.queueType,
       puuid: players.puuid,
       lastSyncAt: players.lastSyncAt,
       groupId: groupPlayers.groupId,
