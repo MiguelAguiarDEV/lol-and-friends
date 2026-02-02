@@ -23,7 +23,7 @@ export default async function AdminPage() {
   }
 
   const user = await currentUser();
-  const email = user?.primaryEmailAddress?.emailAddress ?? null;
+  const email = user?.primaryEmailAddress?.emailAddress ?? undefined;
   await ensureUser({
     id: userId,
     email,
