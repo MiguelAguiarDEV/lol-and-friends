@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { hasAdminAllowlist, isAdminEmail } from "@/lib/auth/admin";
 
 const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
 const screenshotMode = process.env.SCREENSHOT_MODE === "true";
@@ -17,15 +16,7 @@ const middleware = screenshotMode
         return;
       }
 
-      const authObject = await auth.protect();
-      if (!hasAdminAllowlist()) {
-        return;
-      }
-
-      const email = authObject.sessionClaims?.email;
-      if (!isAdminEmail(typeof email === "string" ? email : null)) {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
+      await auth.protect();
     });
 
 export default middleware;
