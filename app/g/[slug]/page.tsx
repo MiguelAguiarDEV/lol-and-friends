@@ -79,9 +79,9 @@ export default async function GroupPage({
             <button
               type="submit"
               disabled={!canSync}
-              className={`rounded-md border px-3 py-2 text-xs font-medium ${
+              className={`rounded-md border px-3 py-2 text-xs font-medium transition ${
                 canSync
-                  ? "border-gray-200 bg-white text-gray-700"
+                  ? "border-gray-200 bg-white text-gray-700 hover:border-gray-900 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20"
                   : "cursor-not-allowed border-gray-100 bg-gray-100 text-gray-400"
               }`}
             >
