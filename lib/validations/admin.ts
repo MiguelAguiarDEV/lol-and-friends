@@ -3,13 +3,13 @@ import { z } from "zod";
 
 export const createGroupSchema = z.object({
   name: z.string().min(2),
-  syncIntervalMinutes: z.coerce.number().min(15).max(1440).default(360),
+  syncIntervalMinutes: z.coerce.number().min(0.5).max(1440).default(360),
   manualCooldownMinutes: z.coerce.number().min(5).max(240).default(30),
 });
 
 export const settingsSchema = z.object({
   groupId: z.string().min(1),
-  syncIntervalMinutes: z.coerce.number().min(15).max(1440),
+  syncIntervalMinutes: z.coerce.number().min(0.5).max(1440),
   manualCooldownMinutes: z.coerce.number().min(5).max(240),
 });
 

@@ -82,7 +82,8 @@ export default async function AdminPage() {
                 id="group-sync-interval"
                 name="syncIntervalMinutes"
                 type="number"
-                min={15}
+                min={0.5}
+                step={0.5}
                 max={1440}
                 defaultValue={360}
                 className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
@@ -180,7 +181,8 @@ export default async function AdminPage() {
                     id={syncId}
                     name="syncIntervalMinutes"
                     type="number"
-                    min={15}
+                    min={0.5}
+                    step={0.5}
                     max={1440}
                     defaultValue={group.syncIntervalMinutes ?? 360}
                     className="mt-1 w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
