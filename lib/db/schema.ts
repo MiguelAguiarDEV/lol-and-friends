@@ -70,6 +70,7 @@ export const players = sqliteTable(
     gameName: text("game_name").notNull(),
     tagLine: text("tag_line").notNull(),
     region: text("region").notNull(),
+    queueType: text("queue_type").notNull().default("RANKED_SOLO_5x5"),
     puuid: text("puuid"),
     opggUrl: text("opgg_url"),
     tier: text("tier"),

@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD COLUMN `queue_type` text DEFAULT 'RANKED_SOLO_5x5' NOT NULL;

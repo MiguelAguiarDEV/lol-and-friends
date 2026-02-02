@@ -283,6 +283,7 @@ export async function createPlayer(params: {
   gameName: string;
   tagLine: string;
   region: string;
+  queueType?: string;
   opggUrl?: string;
 }) {
   await db.insert(players).values({
@@ -290,6 +291,7 @@ export async function createPlayer(params: {
     gameName: params.gameName,
     tagLine: params.tagLine,
     region: params.region,
+    queueType: params.queueType ?? "RANKED_SOLO_5x5",
     opggUrl: params.opggUrl,
   });
 
@@ -343,6 +345,7 @@ export async function getGroupPlayers(groupId: string) {
       gameName: players.gameName,
       tagLine: players.tagLine,
       region: players.region,
+      queueType: players.queueType,
       puuid: players.puuid,
       opggUrl: players.opggUrl,
       tier: players.tier,
@@ -371,6 +374,7 @@ export async function getPlayersForSync() {
       gameName: players.gameName,
       tagLine: players.tagLine,
       region: players.region,
+      queueType: players.queueType,
       puuid: players.puuid,
       lastSyncAt: players.lastSyncAt,
       groupId: groupPlayers.groupId,

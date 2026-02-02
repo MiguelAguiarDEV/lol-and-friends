@@ -2,9 +2,46 @@ import { logger } from "@/lib/logger";
 import type { RiotAccountRegion, RiotPlatformRegion } from "@/lib/riot/regions";
 
 const apiKey = process.env.RIOT_API_KEY;
+const riotUserAgent =
+  process.env.RIOT_USER_AGENT ??
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36";
+const riotAcceptLanguage =
+  process.env.RIOT_ACCEPT_LANGUAGE ?? "en-GB,en-US;q=0.9,en;q=0.8,es;q=0.7";
 
 if (!apiKey) {
   logger.warn("Missing RIOT_API_KEY in environment");
+}
+
+export class RiotRateLimitError extends Error {
+  retryAfterSeconds: number;
+  limitType: string | null;
+  status: number;
+
+  constructor(params: {
+    retryAfterSeconds: number;
+    limitType: string | null;
+    status: number;
+  }) {
+    super(
+      `Riot API rate limited (${params.status}). Retry after ${params.retryAfterSeconds}s`,
+    );
+    this.name = "RiotRateLimitError";
+    this.retryAfterSeconds = params.retryAfterSeconds;
+    this.limitType = params.limitType;
+    this.status = params.status;
+  }
+}
+
+function parseRetryAfter(response: Response) {
+  const header = response.headers.get("retry-after");
+  if (!header) {
+    return 1;
+  }
+  const seconds = Number.parseInt(header, 10);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return seconds;
+  }
+  return 1;
 }
 
 /**
@@ -16,9 +53,22 @@ async function riotFetch<T>(url: string): Promise<T> {
   const response = await fetch(url, {
     headers: {
       "X-Riot-Token": apiKey ?? "",
+      "User-Agent": riotUserAgent,
+      "Accept-Language": riotAcceptLanguage,
+      "Accept-Charset": "application/x-www-form-urlencoded; charset=UTF-8",
     },
     cache: "no-store",
   });
+
+  if (response.status === 429) {
+    const retryAfterSeconds = parseRetryAfter(response);
+    const limitType = response.headers.get("x-rate-limit-type");
+    throw new RiotRateLimitError({
+      retryAfterSeconds,
+      limitType,
+      status: response.status,
+    });
+  }
 
   if (!response.ok) {
     const text = await response.text();

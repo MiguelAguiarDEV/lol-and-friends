@@ -126,6 +126,7 @@ export async function addPlayerAction(formData: FormData) {
     gameName: formData.get("gameName"),
     tagLine: formData.get("tagLine"),
     region: formData.get("region"),
+    queueType: formData.get("queueType"),
   });
 
   await assertGroupAccess({ userId, groupId: parsed.groupId });
@@ -143,6 +144,7 @@ export async function addPlayerAction(formData: FormData) {
       gameName: parsed.gameName,
       tagLine: parsed.tagLine,
       region,
+      queueType: parsed.queueType,
       opggUrl: `https://www.op.gg/summoners/${opggRegion(region)}/${encodeURIComponent(
         `${parsed.gameName}-${parsed.tagLine}`,
       )}`,

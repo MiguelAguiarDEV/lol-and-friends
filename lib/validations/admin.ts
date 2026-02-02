@@ -18,6 +18,9 @@ export const playerSchema = z.object({
   gameName: z.string().min(2),
   tagLine: z.string().min(2),
   region: z.string().min(2),
+  queueType: z
+    .enum(["RANKED_SOLO_5x5", "RANKED_FLEX_SR"])
+    .default("RANKED_SOLO_5x5"),
 });
 
 export const removePlayerSchema = z.object({
