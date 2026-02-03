@@ -8,6 +8,7 @@ type SortableHeaderProps = {
   sortKey: SortKey;
   children: React.ReactNode;
   currentPath: string;
+  label?: string;
 };
 
 /**
@@ -18,6 +19,7 @@ export function SortableHeader({
   sortKey,
   children,
   currentPath,
+  label,
 }: SortableHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,7 +53,7 @@ export function SortableHeader({
         type="button"
         onClick={handleClick}
         className="flex w-full items-center gap-1"
-        aria-label={`Ordenar por ${children}`}
+        aria-label={label || `Ordenar por ${sortKey}`}
       >
         <span>{children}</span>
         <div className="flex flex-col">
@@ -60,6 +62,7 @@ export function SortableHeader({
             fill="currentColor"
             viewBox="0 0 12 12"
             aria-hidden="true"
+            data-testid="arrow-asc"
           >
             <path d="M6 3l4 4H2z" />
           </svg>
@@ -68,6 +71,7 @@ export function SortableHeader({
             fill="currentColor"
             viewBox="0 0 12 12"
             aria-hidden="true"
+            data-testid="arrow-desc"
           >
             <path d="M6 9L2 5h8z" />
           </svg>

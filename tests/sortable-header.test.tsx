@@ -55,7 +55,7 @@ describe("SortableHeader", () => {
     const params = new URLSearchParams("sort=winrate&dir=desc");
     (useSearchParams as jest.Mock).mockReturnValue(params);
 
-    const { container } = render(
+    const { getByTestId } = render(
       <table>
         <thead>
           <tr>
@@ -68,16 +68,17 @@ describe("SortableHeader", () => {
     );
 
     // Check that the descending arrow has darker color (text-gray-900)
-    const svgs = container.querySelectorAll("svg");
-    expect(svgs[1]).toHaveClass("text-gray-900");
-    expect(svgs[0]).toHaveClass("text-gray-300");
+    const arrowDesc = getByTestId("arrow-desc");
+    const arrowAsc = getByTestId("arrow-asc");
+    expect(arrowDesc).toHaveClass("text-gray-900");
+    expect(arrowAsc).toHaveClass("text-gray-300");
   });
 
   it("highlights ascending arrow when column is sorted asc", () => {
     const params = new URLSearchParams("sort=lp&dir=asc");
     (useSearchParams as jest.Mock).mockReturnValue(params);
 
-    const { container } = render(
+    const { getByTestId } = render(
       <table>
         <thead>
           <tr>
@@ -90,8 +91,9 @@ describe("SortableHeader", () => {
     );
 
     // Check that the ascending arrow has darker color (text-gray-900)
-    const svgs = container.querySelectorAll("svg");
-    expect(svgs[0]).toHaveClass("text-gray-900");
-    expect(svgs[1]).toHaveClass("text-gray-300");
+    const arrowAsc = getByTestId("arrow-asc");
+    const arrowDesc = getByTestId("arrow-desc");
+    expect(arrowAsc).toHaveClass("text-gray-900");
+    expect(arrowDesc).toHaveClass("text-gray-300");
   });
 });

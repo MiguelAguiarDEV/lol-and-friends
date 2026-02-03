@@ -189,20 +189,40 @@ export function PlayersTable(props: PlayersTableProps) {
             <tr>
               <th className="px-4 py-3">Jugador</th>
               <th className="px-4 py-3">Región</th>
-              <SortableHeader sortKey="rank" currentPath={props.currentPath}>
+              <SortableHeader
+                sortKey="rank"
+                currentPath={props.currentPath}
+                label="Ordenar por liga"
+              >
                 Liga
               </SortableHeader>
-              <SortableHeader sortKey="lp" currentPath={props.currentPath}>
+              <SortableHeader
+                sortKey="lp"
+                currentPath={props.currentPath}
+                label="Ordenar por LP"
+              >
                 LP
               </SortableHeader>
-              <SortableHeader sortKey="games" currentPath={props.currentPath}>
+              <SortableHeader
+                sortKey="games"
+                currentPath={props.currentPath}
+                label="Ordenar por partidas"
+              >
                 W/L
               </SortableHeader>
-              <SortableHeader sortKey="winrate" currentPath={props.currentPath}>
+              <SortableHeader
+                sortKey="winrate"
+                currentPath={props.currentPath}
+                label="Ordenar por winrate"
+              >
                 Winrate
               </SortableHeader>
               <th className="px-4 py-3">Objetivo</th>
-              <SortableHeader sortKey="updated" currentPath={props.currentPath}>
+              <SortableHeader
+                sortKey="updated"
+                currentPath={props.currentPath}
+                label="Ordenar por última actualización"
+              >
                 Últ. actualización
               </SortableHeader>
               <th className="px-4 py-3">OPGG</th>
