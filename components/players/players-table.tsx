@@ -1,3 +1,4 @@
+import { SortableHeader } from "@/components/players/sortable-header";
 import { formatPercent, getGames, getWinrate } from "@/lib/players/metrics";
 import { getRankScore } from "@/lib/players/rank";
 
@@ -22,13 +23,16 @@ const dateFormatter = new Intl.DateTimeFormat("es-ES", {
   dateStyle: "medium",
 });
 
-type SortKey = "winrate" | "lp" | "rank" | "updated";
+type SortKey = "winrate" | "lp" | "rank" | "updated" | "games";
+type SortDirection = "asc" | "desc";
 
 type PlayersTableProps = {
   players: PlayerRow[];
   title?: string;
   subtitle?: string;
   sort?: SortKey;
+  sortDirection?: SortDirection;
+  currentPath: string;
 };
 
 /**
@@ -36,33 +40,36 @@ type PlayersTableProps = {
  */
 export function PlayersTable(props: PlayersTableProps) {
   const sortKey = props.sort ?? "winrate";
+  const sortDirection = props.sortDirection ?? "desc";
   const sortedPlayers = [...props.players].sort((a, b) => {
     const winsA = a.wins ?? 0;
     const lossesA = a.losses ?? 0;
     const winsB = b.wins ?? 0;
     const lossesB = b.losses ?? 0;
 
+    let result = 0;
+
     if (sortKey === "lp") {
-      return (b.lp ?? 0) - (a.lp ?? 0);
-    }
-
-    if (sortKey === "rank") {
-      return (
+      result = (b.lp ?? 0) - (a.lp ?? 0);
+    } else if (sortKey === "rank") {
+      result =
         getRankScore({ tier: b.tier, division: b.division, lp: b.lp }) -
-        getRankScore({ tier: a.tier, division: a.division, lp: a.lp })
-      );
-    }
-
-    if (sortKey === "updated") {
+        getRankScore({ tier: a.tier, division: a.division, lp: a.lp });
+    } else if (sortKey === "updated") {
       const timeA = a.lastSyncAt ? Date.parse(a.lastSyncAt) : 0;
       const timeB = b.lastSyncAt ? Date.parse(b.lastSyncAt) : 0;
-      return timeB - timeA;
+      result = timeB - timeA;
+    } else if (sortKey === "games") {
+      const gamesA = getGames({ wins: winsA, losses: lossesA });
+      const gamesB = getGames({ wins: winsB, losses: lossesB });
+      result = gamesB - gamesA;
+    } else {
+      result =
+        getWinrate({ wins: winsB, losses: lossesB }) -
+        getWinrate({ wins: winsA, losses: lossesA });
     }
 
-    return (
-      getWinrate({ wins: winsB, losses: lossesB }) -
-      getWinrate({ wins: winsA, losses: lossesA })
-    );
+    return sortDirection === "asc" ? -result : result;
   });
 
   return (
@@ -182,12 +189,22 @@ export function PlayersTable(props: PlayersTableProps) {
             <tr>
               <th className="px-4 py-3">Jugador</th>
               <th className="px-4 py-3">Región</th>
-              <th className="px-4 py-3">Liga</th>
-              <th className="px-4 py-3">LP</th>
-              <th className="px-4 py-3">W/L</th>
-              <th className="px-4 py-3">Winrate</th>
+              <SortableHeader sortKey="rank" currentPath={props.currentPath}>
+                Liga
+              </SortableHeader>
+              <SortableHeader sortKey="lp" currentPath={props.currentPath}>
+                LP
+              </SortableHeader>
+              <SortableHeader sortKey="games" currentPath={props.currentPath}>
+                W/L
+              </SortableHeader>
+              <SortableHeader sortKey="winrate" currentPath={props.currentPath}>
+                Winrate
+              </SortableHeader>
               <th className="px-4 py-3">Objetivo</th>
-              <th className="px-4 py-3">Últ. actualización</th>
+              <SortableHeader sortKey="updated" currentPath={props.currentPath}>
+                Últ. actualización
+              </SortableHeader>
               <th className="px-4 py-3">OPGG</th>
             </tr>
           </thead>

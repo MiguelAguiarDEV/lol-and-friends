@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 type GroupPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ sort?: string }>;
+  searchParams?: Promise<{ sort?: string; dir?: string }>;
 };
 
 export default async function GroupPage({
@@ -25,6 +25,7 @@ export default async function GroupPage({
 
   const publicCooldownMinutes = 1;
   const sort = normalizeSort(resolvedSearchParams?.sort);
+  const sortDirection = normalizeSortDirection(resolvedSearchParams?.dir);
   const sortOptions = [
     { value: "winrate", label: "Winrate" },
     { value: "rank", label: "Rango" },
@@ -92,6 +93,8 @@ export default async function GroupPage({
           title="Tabla pública"
           subtitle="Vista read-only del grupo."
           sort={sort}
+          sortDirection={sortDirection}
+          currentPath={`/g/${data.group.slug}`}
         />
       </div>
     </main>
@@ -99,8 +102,20 @@ export default async function GroupPage({
 }
 
 function normalizeSort(value?: string) {
-  if (value === "lp" || value === "rank" || value === "updated") {
+  if (
+    value === "lp" ||
+    value === "rank" ||
+    value === "updated" ||
+    value === "games"
+  ) {
     return value;
   }
   return "winrate";
+}
+
+function normalizeSortDirection(value?: string) {
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+  return "desc";
 }
