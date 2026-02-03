@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { formatPercent, getGames, getWinrate } from "@/lib/players/metrics";
 import { getRankScore } from "@/lib/players/rank";
 
@@ -23,46 +26,61 @@ const dateFormatter = new Intl.DateTimeFormat("es-ES", {
 });
 
 type SortKey = "winrate" | "lp" | "rank" | "updated";
+type SortDirection = "asc" | "desc";
 
 type PlayersTableProps = {
   players: PlayerRow[];
   title?: string;
   subtitle?: string;
-  sort?: SortKey;
+  initialSort?: SortKey;
 };
 
 /**
- * Render the public players table.
+ * Render the public players table with sortable column headers.
  */
 export function PlayersTable(props: PlayersTableProps) {
-  const sortKey = props.sort ?? "winrate";
+  const [sortKey, setSortKey] = useState<SortKey>(
+    props.initialSort ?? "winrate",
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      // Toggle direction if clicking the same column
+      setSortDirection(sortDirection === "desc" ? "asc" : "desc");
+    } else {
+      // New column - default to desc for most metrics
+      setSortKey(key);
+      setSortDirection("desc");
+    }
+  };
+
   const sortedPlayers = [...props.players].sort((a, b) => {
     const winsA = a.wins ?? 0;
     const lossesA = a.losses ?? 0;
     const winsB = b.wins ?? 0;
     const lossesB = b.losses ?? 0;
 
+    let comparison = 0;
+
     if (sortKey === "lp") {
-      return (b.lp ?? 0) - (a.lp ?? 0);
-    }
-
-    if (sortKey === "rank") {
-      return (
+      comparison = (b.lp ?? 0) - (a.lp ?? 0);
+    } else if (sortKey === "rank") {
+      comparison =
         getRankScore({ tier: b.tier, division: b.division, lp: b.lp }) -
-        getRankScore({ tier: a.tier, division: a.division, lp: a.lp })
-      );
-    }
-
-    if (sortKey === "updated") {
+        getRankScore({ tier: a.tier, division: a.division, lp: a.lp });
+    } else if (sortKey === "updated") {
       const timeA = a.lastSyncAt ? Date.parse(a.lastSyncAt) : 0;
       const timeB = b.lastSyncAt ? Date.parse(b.lastSyncAt) : 0;
-      return timeB - timeA;
+      comparison = timeB - timeA;
+    } else {
+      comparison =
+        getWinrate({ wins: winsB, losses: lossesB }) -
+        getWinrate({ wins: winsA, losses: lossesA });
     }
 
-    return (
-      getWinrate({ wins: winsB, losses: lossesB }) -
-      getWinrate({ wins: winsA, losses: lossesA })
-    );
+    // Apply direction
+    return sortDirection === "desc" ? comparison : -comparison;
   });
 
   return (
@@ -182,12 +200,84 @@ export function PlayersTable(props: PlayersTableProps) {
             <tr>
               <th className="px-4 py-3">Jugador</th>
               <th className="px-4 py-3">Región</th>
-              <th className="px-4 py-3">Liga</th>
-              <th className="px-4 py-3">LP</th>
+              <th
+                className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100"
+                onClick={() => handleSort("rank")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSort("rank");
+                  }
+                }}
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-1">
+                  Liga
+                  {sortKey === "rank" && (
+                    <span className="text-gray-700">
+                      {sortDirection === "desc" ? "↓" : "↑"}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th
+                className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100"
+                onClick={() => handleSort("lp")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSort("lp");
+                  }
+                }}
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-1">
+                  LP
+                  {sortKey === "lp" && (
+                    <span className="text-gray-700">
+                      {sortDirection === "desc" ? "↓" : "↑"}
+                    </span>
+                  )}
+                </div>
+              </th>
               <th className="px-4 py-3">W/L</th>
-              <th className="px-4 py-3">Winrate</th>
+              <th
+                className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100"
+                onClick={() => handleSort("winrate")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSort("winrate");
+                  }
+                }}
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-1">
+                  Winrate
+                  {sortKey === "winrate" && (
+                    <span className="text-gray-700">
+                      {sortDirection === "desc" ? "↓" : "↑"}
+                    </span>
+                  )}
+                </div>
+              </th>
               <th className="px-4 py-3">Objetivo</th>
-              <th className="px-4 py-3">Últ. actualización</th>
+              <th
+                className="cursor-pointer select-none px-4 py-3 hover:bg-gray-100"
+                onClick={() => handleSort("updated")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleSort("updated");
+                  }
+                }}
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-1">
+                  Últ. actualización
+                  {sortKey === "updated" && (
+                    <span className="text-gray-700">
+                      {sortDirection === "desc" ? "↓" : "↑"}
+                    </span>
+                  )}
+                </div>
+              </th>
               <th className="px-4 py-3">OPGG</th>
             </tr>
           </thead>
