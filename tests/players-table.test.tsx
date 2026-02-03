@@ -1,7 +1,7 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { PlayersTable } from "@/components/players/players-table";
 import type { PlayerRow } from "@/components/players/players-table";
+import { PlayersTable } from "@/components/players/players-table";
 
 const mockPlayers: PlayerRow[] = [
   {
@@ -69,7 +69,7 @@ describe("PlayersTable", () => {
     const ligaHeader = screen.getAllByText(/Liga/i);
     const lpHeader = screen.getAllByText(/LP/i);
     const winrateHeader = screen.getAllByText(/Winrate/i);
-    
+
     // Should have at least one of each header
     expect(ligaHeader.length).toBeGreaterThan(0);
     expect(lpHeader.length).toBeGreaterThan(0);
@@ -84,26 +84,28 @@ describe("PlayersTable", () => {
   });
 
   it("toggles sort direction when clicking the same column", () => {
-    const { container } = render(<PlayersTable players={mockPlayers} initialSort="lp" />);
-    
+    const { container } = render(
+      <PlayersTable players={mockPlayers} initialSort="lp" />,
+    );
+
     // Find LP header in the table (not in mobile view)
     const table = container.querySelector("table");
     expect(table).toBeInTheDocument();
-    
+
     // Initially sorted by LP desc
     let arrows = screen.getAllByText("↓");
     expect(arrows.length).toBeGreaterThan(0);
-    
+
     // Click LP header to toggle
     const lpHeaders = screen.getAllByText("LP");
     // Find the one that's inside a th element
-    const lpHeaderInTable = lpHeaders.find(
-      (el) => el.closest("th")?.classList.contains("cursor-pointer")
+    const lpHeaderInTable = lpHeaders.find((el) =>
+      el.closest("th")?.classList.contains("cursor-pointer"),
     );
-    
+
     if (lpHeaderInTable) {
       fireEvent.click(lpHeaderInTable);
-      
+
       // Should now show ascending arrow
       arrows = screen.getAllByText("↑");
       expect(arrows.length).toBeGreaterThan(0);

@@ -23,6 +23,8 @@ export default async function GroupPage({
   }
 
   const publicCooldownMinutes = 1;
+  // Keep URL sort param for initial state (backward compatibility)
+  // User interactions update client-side state without URL changes
   const sort = normalizeSort(resolvedSearchParams?.sort);
 
   return (

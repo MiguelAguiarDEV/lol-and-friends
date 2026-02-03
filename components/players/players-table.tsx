@@ -205,15 +205,23 @@ export function PlayersTable(props: PlayersTableProps) {
                 onClick={() => handleSort("rank")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     handleSort("rank");
                   }
                 }}
                 tabIndex={0}
+                aria-sort={
+                  sortKey === "rank"
+                    ? sortDirection === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
               >
                 <div className="flex items-center gap-1">
                   Liga
                   {sortKey === "rank" && (
-                    <span className="text-gray-700">
+                    <span className="text-gray-700" aria-hidden="true">
                       {sortDirection === "desc" ? "↓" : "↑"}
                     </span>
                   )}
@@ -224,15 +232,23 @@ export function PlayersTable(props: PlayersTableProps) {
                 onClick={() => handleSort("lp")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     handleSort("lp");
                   }
                 }}
                 tabIndex={0}
+                aria-sort={
+                  sortKey === "lp"
+                    ? sortDirection === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
               >
                 <div className="flex items-center gap-1">
                   LP
                   {sortKey === "lp" && (
-                    <span className="text-gray-700">
+                    <span className="text-gray-700" aria-hidden="true">
                       {sortDirection === "desc" ? "↓" : "↑"}
                     </span>
                   )}
@@ -244,15 +260,23 @@ export function PlayersTable(props: PlayersTableProps) {
                 onClick={() => handleSort("winrate")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     handleSort("winrate");
                   }
                 }}
                 tabIndex={0}
+                aria-sort={
+                  sortKey === "winrate"
+                    ? sortDirection === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
               >
                 <div className="flex items-center gap-1">
                   Winrate
                   {sortKey === "winrate" && (
-                    <span className="text-gray-700">
+                    <span className="text-gray-700" aria-hidden="true">
                       {sortDirection === "desc" ? "↓" : "↑"}
                     </span>
                   )}
@@ -264,15 +288,23 @@ export function PlayersTable(props: PlayersTableProps) {
                 onClick={() => handleSort("updated")}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
                     handleSort("updated");
                   }
                 }}
                 tabIndex={0}
+                aria-sort={
+                  sortKey === "updated"
+                    ? sortDirection === "desc"
+                      ? "descending"
+                      : "ascending"
+                    : "none"
+                }
               >
                 <div className="flex items-center gap-1">
                   Últ. actualización
                   {sortKey === "updated" && (
-                    <span className="text-gray-700">
+                    <span className="text-gray-700" aria-hidden="true">
                       {sortDirection === "desc" ? "↓" : "↑"}
                     </span>
                   )}
