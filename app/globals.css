@@ -5,6 +5,52 @@
     /* League of Legends + Stats themed color palette */
     /* Optimized for 18-30 year old audience */
 
+    /* Light mode - Clean and modern */
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
+
+    --primary: 42 65% 52%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 175 70% 45%;
+    --secondary-foreground: 0 0% 98%;
+
+    --accent: 262 70% 55%;
+    --accent-foreground: 0 0% 98%;
+
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 40%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --border: 220 15% 85%;
+    --input: 220 15% 90%;
+    --ring: 42 65% 52%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+
+    /* Chart colors for stats */
+    --chart-1: 262 80% 65%;
+    --chart-2: 175 85% 55%;
+    --chart-3: 42 65% 62%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 0 72% 51%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
     /* Base colors - Dark theme inspired by LoL client */
     --background: 220 20% 10%;
     --foreground: 210 10% 98%;
@@ -49,52 +95,6 @@
     /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 38 10% 10%;
-
-    /* Chart colors for stats */
-    --chart-1: 262 80% 65%;
-    --chart-2: 175 85% 55%;
-    --chart-3: 42 65% 62%;
-    --chart-4: 142 76% 36%;
-    --chart-5: 0 72% 51%;
-
-    --radius: 0.5rem;
-  }
-
-  .light {
-    /* Light mode - Clean and modern */
-    --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
-
-    --primary: 42 65% 52%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 175 70% 45%;
-    --secondary-foreground: 0 0% 98%;
-
-    --accent: 262 70% 55%;
-    --accent-foreground: 0 0% 98%;
-
-    --muted: 220 15% 95%;
-    --muted-foreground: 220 10% 40%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
-
-    --border: 220 15% 85%;
-    --input: 220 15% 90%;
-    --ring: 42 65% 52%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 10%;
   }
 }
 
