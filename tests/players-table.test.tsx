@@ -77,9 +77,11 @@ describe("PlayersTable", () => {
   });
 
   it("shows sort indicator on initial sort column", () => {
-    const { container } = render(<PlayersTable players={mockPlayers} initialSort="winrate" />);
+    const { container } = render(
+      <PlayersTable players={mockPlayers} initialSort="winrate" />,
+    );
     // Check for SVG icons (lucide-react icons are SVGs)
-    const svgs = container.querySelectorAll('svg');
+    const svgs = container.querySelectorAll("svg");
     expect(svgs.length).toBeGreaterThan(0);
   });
 
@@ -93,7 +95,7 @@ describe("PlayersTable", () => {
     expect(table).toBeInTheDocument();
 
     // Check initial state - should have SVG icons
-    let svgs = container.querySelectorAll('svg');
+    let svgs = container.querySelectorAll("svg");
     const initialIconCount = svgs.length;
     expect(initialIconCount).toBeGreaterThan(0);
 
@@ -108,7 +110,7 @@ describe("PlayersTable", () => {
       fireEvent.click(lpHeaderInTable);
 
       // Should still have SVG icons (just different direction)
-      svgs = container.querySelectorAll('svg');
+      svgs = container.querySelectorAll("svg");
       expect(svgs.length).toBeGreaterThan(0);
     }
   });
