@@ -220,11 +220,15 @@ export function PlayersTable(props: PlayersTableProps) {
               >
                 <div className="flex items-center gap-1">
                   Liga
-                  {sortKey === "rank" && (
-                    <span className="text-gray-700" aria-hidden="true">
-                      {sortDirection === "desc" ? "↓" : "↑"}
-                    </span>
-                  )}
+                  <span className="text-gray-400" aria-hidden="true">
+                    {sortKey === "rank" ? (
+                      <span className="text-gray-700">
+                        {sortDirection === "desc" ? "↓" : "↑"}
+                      </span>
+                    ) : (
+                      "⇅"
+                    )}
+                  </span>
                 </div>
               </th>
               <th
@@ -247,11 +251,15 @@ export function PlayersTable(props: PlayersTableProps) {
               >
                 <div className="flex items-center gap-1">
                   LP
-                  {sortKey === "lp" && (
-                    <span className="text-gray-700" aria-hidden="true">
-                      {sortDirection === "desc" ? "↓" : "↑"}
-                    </span>
-                  )}
+                  <span className="text-gray-400" aria-hidden="true">
+                    {sortKey === "lp" ? (
+                      <span className="text-gray-700">
+                        {sortDirection === "desc" ? "↓" : "↑"}
+                      </span>
+                    ) : (
+                      "⇅"
+                    )}
+                  </span>
                 </div>
               </th>
               <th className="px-4 py-3">W/L</th>
@@ -275,11 +283,15 @@ export function PlayersTable(props: PlayersTableProps) {
               >
                 <div className="flex items-center gap-1">
                   Winrate
-                  {sortKey === "winrate" && (
-                    <span className="text-gray-700" aria-hidden="true">
-                      {sortDirection === "desc" ? "↓" : "↑"}
-                    </span>
-                  )}
+                  <span className="text-gray-400" aria-hidden="true">
+                    {sortKey === "winrate" ? (
+                      <span className="text-gray-700">
+                        {sortDirection === "desc" ? "↓" : "↑"}
+                      </span>
+                    ) : (
+                      "⇅"
+                    )}
+                  </span>
                 </div>
               </th>
               <th className="px-4 py-3">Objetivo</th>
@@ -303,11 +315,15 @@ export function PlayersTable(props: PlayersTableProps) {
               >
                 <div className="flex items-center gap-1">
                   Últ. actualización
-                  {sortKey === "updated" && (
-                    <span className="text-gray-700" aria-hidden="true">
-                      {sortDirection === "desc" ? "↓" : "↑"}
-                    </span>
-                  )}
+                  <span className="text-gray-400" aria-hidden="true">
+                    {sortKey === "updated" ? (
+                      <span className="text-gray-700">
+                        {sortDirection === "desc" ? "↓" : "↑"}
+                      </span>
+                    ) : (
+                      "⇅"
+                    )}
+                  </span>
                 </div>
               </th>
               <th className="px-4 py-3">OPGG</th>
