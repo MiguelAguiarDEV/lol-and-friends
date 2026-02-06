@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7fb;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --muted: #e6ebf3;
+  --muted-foreground: #4b5563;
+  --border: #d3dbe8;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --accent: #1d4ed8;
+  --ring: #60a5fa;
+}
+
+html[data-theme="dark"] {
+  --background: #0b1220;
+  --foreground: #e5e7eb;
+  --card: #111827;
+  --card-foreground: #f3f4f6;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --border: #334155;
+  --primary: #3b82f6;
+  --primary-foreground: #eff6ff;
+  --accent: #60a5fa;
+  --ring: #93c5fd;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  a[href],
+  button,
+  [role="button"] {
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      opacity 160ms ease,
+      transform 120ms ease;
+  }
+
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  button:active:not(:disabled),
+  a[href]:active {
+    transform: translateY(1px);
+  }
 }

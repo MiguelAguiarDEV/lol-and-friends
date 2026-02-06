@@ -144,6 +144,21 @@ export async function getSummonerByPuuid(params: {
 }
 
 /**
+ * Obtiene summoner por nombre visible en la región de plataforma.
+ * @param params - Región de plataforma y nombre de summoner.
+ * @returns Summoner con ID y PUUID.
+ */
+export async function getSummonerByName(params: {
+  platformRegion: RiotPlatformRegion;
+  summonerName: string;
+}) {
+  const url = `https://${params.platformRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${encodeURIComponent(
+    params.summonerName,
+  )}`;
+  return riotFetch<RiotSummoner>(url);
+}
+
+/**
  * Obtiene entradas de liga por ID de summoner.
  * @param params - Región de plataforma e ID de summoner.
  * @returns Entradas de liga.

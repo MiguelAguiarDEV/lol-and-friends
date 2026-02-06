@@ -1,15 +1,26 @@
-import Link from "next/link";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import { publicSyncGroupAction } from "@/app/g/[slug]/actions";
-import { PublicSyncButton } from "@/app/g/[slug]/public-sync-button";
+import { updateGroupSettingsAction } from "@/app/admin/actions";
+import {
+  publicSyncGroupAction,
+  updateGroupPlayerMetaAction,
+} from "@/app/g/[slug]/actions";
+import { GroupAdminSettingsCard } from "@/components/group/group-admin-settings-card";
+import { GroupPageHeader } from "@/components/group/group-page-header";
+import { PageShell } from "@/components/layout/page-shell";
 import { PlayersTable } from "@/components/players/players-table";
+import type {
+  PlayerSortDirection,
+  PlayerSortKey,
+} from "@/components/players/types";
+import { isAdminEmail } from "@/lib/auth/admin";
 import { getGroupBySlug } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
 type GroupPageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ sort?: string }>;
+  searchParams?: Promise<{ sort?: string; dir?: string }>;
 };
 
 export default async function GroupPage({
@@ -25,82 +36,84 @@ export default async function GroupPage({
 
   const publicCooldownMinutes = 1;
   const sort = normalizeSort(resolvedSearchParams?.sort);
-  const sortOptions = [
-    { value: "winrate", label: "Winrate" },
-    { value: "rank", label: "Rango" },
-    { value: "lp", label: "LP" },
-    { value: "updated", label: "Actualizado" },
-  ];
+  const direction = normalizeDirection(resolvedSearchParams?.dir);
+  const showAdminControls = await canShowAdminControls();
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10 text-gray-900 sm:px-6">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-              {data.group.name}
-            </h1>
-            <p className="text-sm text-gray-600 sm:text-base">
-              Ranking actualizado automáticamente desde Riot.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-            <span>Ordenar por</span>
-            <div className="flex flex-wrap gap-2">
-              {sortOptions.map((option) => (
-                <Link
-                  key={option.value}
-                  href={`/g/${data.group.slug}?sort=${option.value}`}
-                  className={`rounded-full border px-3 py-1 text-xs ${
-                    sort === option.value
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-200 bg-white text-gray-700"
-                  }`}
-                >
-                  {option.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <form action={publicSyncGroupAction} className="flex items-center">
-            <input type="hidden" name="groupId" value={data.group.id} />
-            <PublicSyncButton
-              lastManualSyncAt={data.group.lastManualSyncAt}
-              cooldownMinutes={publicCooldownMinutes}
-            />
-          </form>
-        </div>
-        <p className="text-xs text-gray-500">Cooldown público: 1 minuto.</p>
+    <PageShell maxWidth="6xl">
+      <GroupPageHeader
+        groupId={data.group.id}
+        groupName={data.group.name}
+        lastManualSyncAt={data.group.lastManualSyncAt}
+        cooldownMinutes={publicCooldownMinutes}
+        onPublicSync={publicSyncGroupAction}
+      />
 
-        <PlayersTable
-          players={data.players.map((player) => ({
-            id: player.id,
-            gameName: player.gameName,
-            tagLine: player.tagLine,
-            region: player.region,
-            opggUrl: player.opggUrl,
-            tier: player.tier,
-            division: player.division,
-            lp: player.lp,
-            wins: player.wins,
-            losses: player.losses,
-            notes: player.notes,
-            objective: player.objective,
-            monthCheckpoint: player.monthCheckpoint,
-            lastSyncAt: player.lastSyncAt,
-          }))}
-          title="Tabla pública"
-          subtitle="Vista read-only del grupo."
-          sort={sort}
+      {showAdminControls ? (
+        <GroupAdminSettingsCard
+          groupId={data.group.id}
+          syncIntervalMinutes={data.group.syncIntervalMinutes}
+          manualCooldownMinutes={data.group.manualCooldownMinutes}
+          onSave={updateGroupSettingsAction}
         />
-      </div>
-    </main>
+      ) : null}
+
+      <PlayersTable
+        players={data.players.map((player) => ({
+          id: player.id,
+          gameName: player.gameName,
+          tagLine: player.tagLine,
+          region: player.region,
+          opggUrl: player.opggUrl,
+          tier: player.tier,
+          division: player.division,
+          lp: player.lp,
+          wins: player.wins,
+          losses: player.losses,
+          notes: player.notes,
+          objective: player.objective,
+          monthCheckpoint: player.monthCheckpoint,
+          lastSyncAt: player.lastSyncAt,
+        }))}
+        sort={sort}
+        direction={direction}
+        showHeader={false}
+        showSortHint={false}
+        groupSlug={data.group.slug}
+        editableGroupId={showAdminControls ? data.group.id : undefined}
+        onUpdatePlayerMeta={
+          showAdminControls ? updateGroupPlayerMetaAction : undefined
+        }
+      />
+    </PageShell>
   );
 }
 
-function normalizeSort(value?: string) {
+function normalizeSort(value?: string): PlayerSortKey {
   if (value === "lp" || value === "rank" || value === "updated") {
     return value;
   }
   return "winrate";
+}
+
+function normalizeDirection(value?: string): PlayerSortDirection {
+  if (value === "asc") {
+    return "asc";
+  }
+  return "desc";
+}
+
+async function canShowAdminControls() {
+  const hasClerkKey = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  if (!hasClerkKey) {
+    return false;
+  }
+
+  const { userId } = await auth();
+  if (!userId) {
+    return false;
+  }
+
+  const user = await currentUser();
+  return isAdminEmail(user?.primaryEmailAddress?.emailAddress);
 }

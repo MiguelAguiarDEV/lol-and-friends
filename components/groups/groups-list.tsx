@@ -9,7 +9,7 @@ export type GroupListItem = {
 export function GroupsList(props: { groups: GroupListItem[] }) {
   if (props.groups.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-600">
+      <div className="rounded-xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
         Aún no hay grupos públicos. Crea uno desde /admin.
       </div>
     );
@@ -21,13 +21,15 @@ export function GroupsList(props: { groups: GroupListItem[] }) {
         <Link
           key={group.id}
           href={`/g/${group.slug}`}
-          className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-gray-300 hover:shadow"
+          className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:border-ring hover:shadow"
         >
-          <div className="text-sm text-gray-500">Grupo público</div>
-          <div className="mt-1 text-lg font-semibold text-gray-900">
+          <div className="text-sm text-muted-foreground">Grupo público</div>
+          <div className="mt-1 text-lg font-semibold text-card-foreground">
             {group.name}
           </div>
-          <div className="mt-2 text-xs text-gray-500">/{group.slug}</div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            /{group.slug}
+          </div>
         </Link>
       ))}
     </div>
