@@ -422,11 +422,33 @@ export async function getPlayersForSync() {
 }
 
 /**
+ * Actualiza metadatos editables del jugador desde UI.
+ * @param params - IDs y campos editables.
+ */
+export async function updatePlayerMeta(params: {
+  playerId: string;
+  notes: string | null;
+  objective: string | null;
+  monthCheckpoint: string | null;
+}) {
+  await db
+    .update(players)
+    .set({
+      notes: params.notes,
+      objective: params.objective,
+      monthCheckpoint: params.monthCheckpoint,
+      updatedAt: sql`(CURRENT_TIMESTAMP)`,
+    })
+    .where(eq(players.id, params.playerId));
+}
+
+/**
  * Actualiza datos de ranked y estado de sync del jugador.
  * @param params - Campos de actualización.
  */
 export async function updatePlayerSync(params: {
   playerId: string;
+  queueType?: string;
   puuid?: string;
   tier?: string | null;
   division?: string | null;
@@ -439,6 +461,7 @@ export async function updatePlayerSync(params: {
   await db
     .update(players)
     .set({
+      queueType: params.queueType,
       puuid: params.puuid,
       tier: params.tier,
       division: params.division,

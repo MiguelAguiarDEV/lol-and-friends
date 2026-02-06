@@ -11,7 +11,12 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
   - `api/sync/route.ts` — cron de sync Riot
   - `hello-world/page.tsx` — verificación de funcionamiento
 - `components/groups/` — tarjetas/listado de grupos
-- `components/players/players-table.tsx` — tabla + cards mobile
+- `components/admin/` — bloques de UI para panel admin (crear grupo, overview y detalle)
+- `components/group/` — bloques de UI para vista de grupo público
+- `components/layout/` — layout reutilizable (navbar, shell, headers, cards)
+- `components/players/` — tabla pública modular + orden + edición inline admin
+- `components/ui/` — primitives UI reutilizables (`button`, `modal`, `input`, `label`, `select`, `textarea`, `badge`)
+- `components/theme/theme-switcher.tsx` — selector de tema claro/oscuro
 - `lib/db/` — cliente, schema y queries (Drizzle)
   - `migrations/` — migraciones generadas
 - `lib/riot/` — API, regiones, colas y lógica de sync
@@ -65,6 +70,20 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - Cola y región seleccionables desde admin (cola por jugador).
 - Reintentos con backoff cuando hay rate limit (429).
 - Botón público en `/g/[slug]` (cooldown 1 min).
+- Resolución de PUUID con fallback: Riot ID y, si falla, búsqueda por nombre de summoner.
+- Fallback de cola en ranked: si la cola preferida no existe, usa otra entrada disponible (por ejemplo Flex).
+
+## UI/UX reciente
+- Tema de la app con selector global `Claro/Oscuro` y tokens de color semánticos en `app/globals.css`.
+- Navbar global con navegación principal, switch de tema con iconos y menú de cuenta con avatar.
+- Navbar: switch de tema por icono circular (sin bloque cuadrado en hover).
+- Tabla pública: ordenación por click en cabeceras (`LP`, `Liga`, `Winrate`, `Últ. actualización`) con soporte asc/desc e indicadores visuales.
+- Modal de “Añadir jugador” en admin: feedback visible de éxito/error al enviar.
+- Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar intervalo de sync y cooldown desde la propia página.
+- Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar `objetivo`, `checkpoint mensual` y `notas` de cada jugador desde la tabla.
+- Panel admin: creación de grupo por modal activado desde botón.
+- Cooldown manual mínimo configurable: `0.5` minutos (30 segundos).
+- Admin UI refactorizada a componentes: cards de estadísticas, directorio responsive (cards/table) y formularios consistentes con primitives.
 
 ## Screenshots (Playwright)
 - Ejecutar: `node scripts/capture-screens.mjs`

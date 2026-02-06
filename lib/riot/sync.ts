@@ -9,6 +9,8 @@ import { logger } from "@/lib/logger";
 import {
   getAccountByRiotId,
   getLeagueEntriesByPuuid,
+  getSummonerByName,
+  type RiotLeagueEntry,
   RiotRateLimitError,
 } from "@/lib/riot/api";
 import type { RiotQueueType } from "@/lib/riot/queues";
@@ -16,10 +18,13 @@ import {
   accountRegionForPlatform,
   normalizePlatformRegion,
   opggRegion,
+  type RiotAccountRegion,
+  type RiotPlatformRegion,
 } from "@/lib/riot/regions";
 import { isPast, nowIso } from "@/lib/utils/time";
 
 const QUEUE_SOLO = "RANKED_SOLO_5x5";
+const QUEUE_FLEX = "RANKED_FLEX_SR";
 const DEFAULT_BATCH_SIZE = 5;
 const API_DELAY_MS = 350;
 const RATE_LIMIT_RETRIES = 2;
@@ -193,20 +198,14 @@ async function syncPlayer(player: {
   try {
     let puuid = player.puuid;
     if (!puuid) {
-      const account = await withRateLimitRetry(
-        () =>
-          getAccountByRiotId({
-            accountRegion,
-            gameName: player.gameName,
-            tagLine: player.tagLine,
-          }),
-        {
-          playerId: player.id,
-          action: "getAccountByRiotId",
-          region: player.region,
-        },
-      );
-      puuid = account.puuid;
+      puuid = await resolvePuuid({
+        platformRegion,
+        accountRegion,
+        gameName: player.gameName,
+        tagLine: player.tagLine,
+        playerId: player.id,
+        region: player.region,
+      });
     }
 
     if (!puuid) {
@@ -228,17 +227,22 @@ async function syncPlayer(player: {
       },
     );
 
-    const queueType = player.queueType ?? QUEUE_SOLO;
-    const solo = entries.find((entry) => entry.queueType === queueType);
+    const preferredQueueType = player.queueType ?? QUEUE_SOLO;
+    const selectedEntry = selectLeagueEntryForSync({
+      entries,
+      preferredQueueType,
+    });
+    const queueTypeUsed = selectedEntry?.queueType ?? preferredQueueType;
 
     await updatePlayerSync({
       playerId: player.id,
+      queueType: queueTypeUsed,
       puuid,
-      tier: solo?.tier ?? null,
-      division: solo?.rank ?? null,
-      lp: solo?.leaguePoints ?? null,
-      wins: solo?.wins ?? null,
-      losses: solo?.losses ?? null,
+      tier: selectedEntry?.tier ?? null,
+      division: selectedEntry?.rank ?? null,
+      lp: selectedEntry?.leaguePoints ?? null,
+      wins: selectedEntry?.wins ?? null,
+      losses: selectedEntry?.losses ?? null,
       opggUrl: `https://www.op.gg/summoners/${opggRegion(platformRegion)}/${encodeURIComponent(
         `${player.gameName}-${player.tagLine}`,
       )}`,
@@ -248,12 +252,12 @@ async function syncPlayer(player: {
     await insertRankSnapshot({
       id: crypto.randomUUID(),
       playerId: player.id,
-      queueType,
-      tier: solo?.tier ?? null,
-      division: solo?.rank ?? null,
-      lp: solo?.leaguePoints ?? null,
-      wins: solo?.wins ?? null,
-      losses: solo?.losses ?? null,
+      queueType: queueTypeUsed,
+      tier: selectedEntry?.tier ?? null,
+      division: selectedEntry?.rank ?? null,
+      lp: selectedEntry?.leaguePoints ?? null,
+      wins: selectedEntry?.wins ?? null,
+      losses: selectedEntry?.losses ?? null,
       fetchedAt: now,
     });
 
@@ -261,7 +265,11 @@ async function syncPlayer(player: {
       playerId: player.id,
       gameName: player.gameName,
       tagLine: player.tagLine,
-      queueType,
+      preferredQueueType,
+      queueTypeUsed,
+      fallbackQueueUsed:
+        Boolean(selectedEntry) &&
+        selectedEntry.queueType !== preferredQueueType,
     });
   } catch (error) {
     logger.error("Riot sync failed", {
@@ -271,4 +279,78 @@ async function syncPlayer(player: {
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+async function resolvePuuid(params: {
+  platformRegion: RiotPlatformRegion;
+  accountRegion: RiotAccountRegion;
+  gameName: string;
+  tagLine: string;
+  playerId: string;
+  region: string;
+}) {
+  const normalizedGameName = params.gameName.trim();
+  const normalizedTagLine = params.tagLine.trim();
+
+  try {
+    const account = await withRateLimitRetry(
+      () =>
+        getAccountByRiotId({
+          accountRegion: params.accountRegion,
+          gameName: normalizedGameName,
+          tagLine: normalizedTagLine,
+        }),
+      {
+        playerId: params.playerId,
+        action: "getAccountByRiotId",
+        region: params.region,
+      },
+    );
+    return account.puuid;
+  } catch (error) {
+    logger.warn("Riot ID lookup failed, trying summoner name fallback", {
+      playerId: params.playerId,
+      gameName: normalizedGameName,
+      tagLine: normalizedTagLine,
+      region: params.region,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const summoner = await withRateLimitRetry(
+    () =>
+      getSummonerByName({
+        platformRegion: params.platformRegion,
+        summonerName: normalizedGameName,
+      }),
+    {
+      playerId: params.playerId,
+      action: "getSummonerByNameFallback",
+      region: params.region,
+    },
+  );
+
+  return summoner.puuid;
+}
+
+export function selectLeagueEntryForSync(params: {
+  entries: RiotLeagueEntry[];
+  preferredQueueType: RiotQueueType;
+}) {
+  const byQueue = new Map(
+    params.entries.map((entry) => [entry.queueType, entry] as const),
+  );
+  const preferred = byQueue.get(params.preferredQueueType);
+  if (preferred) {
+    return preferred;
+  }
+
+  if (params.preferredQueueType === QUEUE_SOLO) {
+    return byQueue.get(QUEUE_FLEX) ?? params.entries[0];
+  }
+  if (params.preferredQueueType === QUEUE_FLEX) {
+    return byQueue.get(QUEUE_SOLO) ?? params.entries[0];
+  }
+
+  return params.entries[0];
 }
