@@ -49,7 +49,7 @@ export async function publicSyncGroupAction(
 
   if (!allowed) {
     logger.info("Public sync cooldown not elapsed", { groupId });
-    return { status: "cooldown", syncedAt: null };
+    return { status: "cooldown", syncedAt: settings.lastManualSyncAt };
   }
 
   try {
