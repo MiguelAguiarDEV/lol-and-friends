@@ -1,11 +1,15 @@
 import { PublicSyncButton } from "@/app/g/[slug]/public-sync-button";
+import type { SyncActionState } from "@/app/g/[slug]/sync-types";
 
 type GroupPageHeaderProps = {
   groupId: string;
   groupName: string;
   lastManualSyncAt: string | null;
   cooldownMinutes: number;
-  onPublicSync: (formData: FormData) => void | Promise<void>;
+  onPublicSync: (
+    previousState: SyncActionState,
+    formData: FormData,
+  ) => Promise<SyncActionState>;
 };
 
 export function GroupPageHeader({
@@ -22,13 +26,12 @@ export function GroupPageHeader({
           {groupName}
         </h1>
       </div>
-      <form action={onPublicSync} className="flex items-center">
-        <input type="hidden" name="groupId" value={groupId} />
-        <PublicSyncButton
-          lastManualSyncAt={lastManualSyncAt}
-          cooldownMinutes={cooldownMinutes}
-        />
-      </form>
+      <PublicSyncButton
+        groupId={groupId}
+        lastManualSyncAt={lastManualSyncAt}
+        cooldownMinutes={cooldownMinutes}
+        onSync={onPublicSync}
+      />
     </div>
   );
 }
