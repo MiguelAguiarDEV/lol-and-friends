@@ -48,7 +48,18 @@ export async function publicSyncGroupAction(formData: FormData) {
     return;
   }
 
-  await syncGroupPlayers({ groupId, force: true, limit: 5 });
+  const result = await syncGroupPlayers({ groupId, force: true });
+
+  logger.info("publicSyncGroupAction completed", {
+    groupId,
+    slug: group.slug,
+    attempted: result.attempted,
+    succeeded: result.succeeded,
+    failed: result.failed,
+    totalDue: result.totalDue,
+    errors: result.errors,
+  });
+
   await touchGroupManualSync({ groupId });
   revalidatePath(`/g/${group.slug}`);
 }
