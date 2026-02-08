@@ -1,3 +1,4 @@
+import { db } from "@/lib/db/client";
 import {
   getGroupPlayers,
   getGroupSyncSettings,
@@ -10,6 +11,7 @@ import {
   getAccountByRiotId,
   getLeagueEntriesByPuuid,
   getSummonerByName,
+  RiotApiError,
   type RiotLeagueEntry,
   RiotRateLimitError,
 } from "@/lib/riot/api";
@@ -262,31 +264,35 @@ async function syncPlayer(player: {
     });
     const queueTypeUsed = selectedEntry?.queueType ?? preferredQueueType;
 
-    await updatePlayerSync({
-      playerId: player.id,
-      queueType: queueTypeUsed,
-      puuid,
-      tier: selectedEntry?.tier ?? null,
-      division: selectedEntry?.rank ?? null,
-      lp: selectedEntry?.leaguePoints ?? null,
-      wins: selectedEntry?.wins ?? null,
-      losses: selectedEntry?.losses ?? null,
-      opggUrl: `https://www.op.gg/summoners/${opggRegion(platformRegion)}/${encodeURIComponent(
-        `${player.gameName}-${player.tagLine}`,
-      )}`,
-      lastSyncAt: now,
-    });
+    await db.transaction(async (tx) => {
+      await updatePlayerSync({
+        playerId: player.id,
+        queueType: preferredQueueType,
+        puuid,
+        tier: selectedEntry?.tier ?? null,
+        division: selectedEntry?.rank ?? null,
+        lp: selectedEntry?.leaguePoints ?? null,
+        wins: selectedEntry?.wins ?? null,
+        losses: selectedEntry?.losses ?? null,
+        opggUrl: `https://www.op.gg/summoners/${opggRegion(platformRegion)}/${encodeURIComponent(
+          `${player.gameName}-${player.tagLine}`,
+        )}`,
+        lastSyncAt: now,
+        tx,
+      });
 
-    await insertRankSnapshot({
-      id: crypto.randomUUID(),
-      playerId: player.id,
-      queueType: queueTypeUsed,
-      tier: selectedEntry?.tier ?? null,
-      division: selectedEntry?.rank ?? null,
-      lp: selectedEntry?.leaguePoints ?? null,
-      wins: selectedEntry?.wins ?? null,
-      losses: selectedEntry?.losses ?? null,
-      fetchedAt: now,
+      await insertRankSnapshot({
+        id: crypto.randomUUID(),
+        playerId: player.id,
+        queueType: queueTypeUsed,
+        tier: selectedEntry?.tier ?? null,
+        division: selectedEntry?.rank ?? null,
+        lp: selectedEntry?.leaguePoints ?? null,
+        wins: selectedEntry?.wins ?? null,
+        losses: selectedEntry?.losses ?? null,
+        fetchedAt: now,
+        tx,
+      });
     });
 
     logger.info("Riot sync success", {
@@ -341,12 +347,15 @@ async function resolvePuuid(params: {
     );
     return account.puuid;
   } catch (error) {
-    logger.warn("Riot ID lookup failed, trying summoner name fallback", {
+    if (!(error instanceof RiotApiError && error.status === 404)) {
+      throw error;
+    }
+    logger.warn("Riot ID lookup 404, trying summoner name fallback", {
       playerId: params.playerId,
       gameName: normalizedGameName,
       tagLine: normalizedTagLine,
       region: params.region,
-      error: error instanceof Error ? error.message : String(error),
+      error: error.message,
     });
   }
 

@@ -82,7 +82,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - Tema de la app con selector global `Claro/Oscuro` y tokens de color semánticos en `app/globals.css`.
 - Navbar global con navegación principal, switch de tema con iconos y menú de cuenta con avatar.
 - Navbar: switch de tema por icono circular (sin bloque cuadrado en hover).
-- Tabla pública: ordenación por click en cabeceras (`LP`, `Liga`, `Winrate`, `Últ. actualización`) con soporte asc/desc e indicadores visuales.
+- Tabla pública: ordenación por clic en cabeceras (`LP`, `Liga`, `Winrate`, `Últ. actualización`) con soporte asc/desc e indicadores visuales.
 - Modal de “Añadir jugador” en admin: feedback visible de éxito/error al enviar.
 - Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar intervalo de sync y cooldown desde la propia página.
 - Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar `objetivo`, `checkpoint mensual` y `notas` de cada jugador desde la tabla.

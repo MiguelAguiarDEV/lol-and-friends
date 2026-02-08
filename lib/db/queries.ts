@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
-import { db, isDbConfigured } from "@/lib/db/client";
+import { type DbConnection, db, isDbConfigured } from "@/lib/db/client";
 import {
   groupMembers,
   groupPlayers,
@@ -457,8 +457,10 @@ export async function updatePlayerSync(params: {
   losses?: number | null;
   opggUrl?: string | null;
   lastSyncAt: string;
+  tx?: DbConnection;
 }) {
-  await db
+  const conn = params.tx ?? db;
+  await conn
     .update(players)
     .set({
       queueType: params.queueType,
@@ -489,8 +491,10 @@ export async function insertRankSnapshot(params: {
   wins?: number | null;
   losses?: number | null;
   fetchedAt: string;
+  tx?: DbConnection;
 }) {
-  await db.insert(rankSnapshots).values({
+  const conn = params.tx ?? db;
+  await conn.insert(rankSnapshots).values({
     id: params.id,
     playerId: params.playerId,
     queueType: params.queueType,

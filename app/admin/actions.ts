@@ -179,9 +179,19 @@ export async function addPlayerAction(
       });
     }
 
-    if (player) {
-      await addPlayerToGroup({ groupId: parsed.groupId, playerId: player.id });
+    if (!player) {
+      logger.error("createPlayer returned null", {
+        gameName: parsed.gameName,
+        tagLine: parsed.tagLine,
+        region,
+      });
+      return {
+        status: "error",
+        message: "No se pudo crear el jugador.",
+      } satisfies AddPlayerActionState;
     }
+
+    await addPlayerToGroup({ groupId: parsed.groupId, playerId: player.id });
 
     revalidatePath("/admin");
     return {
