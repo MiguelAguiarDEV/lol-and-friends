@@ -2,6 +2,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import type { SyncActionState } from "@/app/g/[slug]/sync-types";
 import { isAdminEmail } from "@/lib/auth/admin";
 import {
   getGroupPlayers,
@@ -19,23 +20,26 @@ const PUBLIC_SYNC_COOLDOWN_MINUTES = 1;
 
 /**
  * Ejecuta un sync público para un grupo (cooldown 1 minuto).
- * @param formData - FormData con groupId.
+ * Compatible con useActionState: recibe (previousState, formData) y retorna SyncActionState.
  */
-export async function publicSyncGroupAction(formData: FormData) {
+export async function publicSyncGroupAction(
+  _previousState: SyncActionState,
+  formData: FormData,
+): Promise<SyncActionState> {
   const groupId = formData.get("groupId");
   if (typeof groupId !== "string" || !groupId) {
-    return;
+    return { status: "error", syncedAt: null };
   }
 
   const group = await getPublicGroupById(groupId);
   if (!group) {
     logger.warn("Public sync denied (group not public)", { groupId });
-    return;
+    return { status: "error", syncedAt: null };
   }
 
   const settings = await getGroupSyncSettings(groupId);
   if (!settings) {
-    return;
+    return { status: "error", syncedAt: null };
   }
 
   const allowed = isPast({
@@ -45,23 +49,30 @@ export async function publicSyncGroupAction(formData: FormData) {
 
   if (!allowed) {
     logger.info("Public sync cooldown not elapsed", { groupId });
-    return;
+    return { status: "cooldown", syncedAt: settings.lastManualSyncAt };
   }
 
-  const result = await syncGroupPlayers({ groupId, force: true });
+  try {
+    const result = await syncGroupPlayers({ groupId, force: true });
 
-  logger.info("publicSyncGroupAction completed", {
-    groupId,
-    slug: group.slug,
-    attempted: result.attempted,
-    succeeded: result.succeeded,
-    failed: result.failed,
-    totalDue: result.totalDue,
-    errors: result.errors,
-  });
+    logger.info("publicSyncGroupAction completed", {
+      groupId,
+      slug: group.slug,
+      attempted: result.attempted,
+      succeeded: result.succeeded,
+      failed: result.failed,
+      totalDue: result.totalDue,
+      errors: result.errors,
+    });
 
-  await touchGroupManualSync({ groupId });
-  revalidatePath(`/g/${group.slug}`);
+    await touchGroupManualSync({ groupId });
+    revalidatePath(`/g/${group.slug}`);
+
+    return { status: "success", syncedAt: new Date().toISOString() };
+  } catch (error) {
+    logger.error("publicSyncGroupAction failed", { groupId, error });
+    return { status: "error", syncedAt: null };
+  }
 }
 
 /**
