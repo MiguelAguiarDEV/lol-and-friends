@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { syncDuePlayers } from "@/lib/riot/sync";
@@ -6,24 +7,49 @@ export const runtime = "nodejs";
 
 const MAX_LIMIT = 10;
 
+function isDevelopmentEnvironment() {
+  return process.env.NODE_ENV === "development";
+}
+
+function safeSecretCompare(params: { expected: string; received: string }) {
+  const expectedBuffer = Buffer.from(params.expected);
+  const receivedBuffer = Buffer.from(params.received);
+  if (expectedBuffer.length !== receivedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function getBearerToken(authHeader: string) {
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+  if (!match) {
+    return null;
+  }
+
+  const token = match[1]?.trim();
+  return token ? token : null;
+}
+
 function isAuthorized(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const url = new URL(request.url);
-  const querySecret = url.searchParams.get("secret");
+  const secret = process.env.CRON_SECRET?.trim();
   const authHeader = request.headers.get("authorization") ?? "";
-  const bearer = authHeader.startsWith("Bearer ")
-    ? authHeader.slice("Bearer ".length)
-    : null;
+  const bearer = getBearerToken(authHeader);
 
-  if (secret && (querySecret === secret || bearer === secret)) {
+  if (!secret) {
+    if (isDevelopmentEnvironment()) {
+      return true;
+    }
+
+    logger.error("CRON_SECRET missing outside development");
+    return false;
+  }
+
+  if (bearer && safeSecretCompare({ expected: secret, received: bearer })) {
     return true;
   }
 
-  if (request.headers.get("x-vercel-cron")) {
-    return true;
-  }
-
-  return !process.env.VERCEL;
+  return false;
 }
 
 export async function GET(request: NextRequest) {
@@ -35,9 +61,12 @@ export async function GET(request: NextRequest) {
   }
 
   const limitParam = new URL(request.url).searchParams.get("limit");
-  const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined;
-  const safeLimit = Number.isFinite(limit)
-    ? Math.min(Math.max(limit as number, 1), MAX_LIMIT)
+  const parsedLimit =
+    limitParam && /^-?\d+$/.test(limitParam)
+      ? Number.parseInt(limitParam, 10)
+      : undefined;
+  const safeLimit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit as number, 1), MAX_LIMIT)
     : undefined;
 
   const result = await syncDuePlayers({ limit: safeLimit });

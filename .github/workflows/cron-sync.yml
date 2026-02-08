@@ -14,10 +14,10 @@ jobs:
           SYNC_URL: ${{ secrets.CRON_SYNC_URL || 'https://lol.miguelaguiar.dev/api/sync' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          if [ -n "$CRON_SECRET" ]; then
-            curl -fsS --max-time 30 --retry 3 --retry-all-errors --retry-delay 5 \
-              -H "Authorization: Bearer $CRON_SECRET" "$SYNC_URL"
-          else
-            curl -fsS --max-time 30 --retry 3 --retry-all-errors --retry-delay 5 \
-              "$SYNC_URL"
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET is required for cron sync"
+            exit 1
           fi
+
+          curl -fsS --max-time 30 --retry 3 --retry-all-errors --retry-delay 5 \
+            -H "Authorization: Bearer $CRON_SECRET" "$SYNC_URL"
