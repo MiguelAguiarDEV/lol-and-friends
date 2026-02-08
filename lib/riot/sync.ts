@@ -173,6 +173,9 @@ export async function syncGroupPlayers(params: {
 }) {
   const settings = await getGroupSyncSettings(params.groupId);
   if (!settings) {
+    logger.warn("syncGroupPlayers aborted (no settings)", {
+      groupId: params.groupId,
+    });
     return buildSyncResult({ results: [], totalDue: 0 });
   }
 
@@ -188,8 +191,18 @@ export async function syncGroupPlayers(params: {
     });
   });
 
-  const limit = params.limit ?? DEFAULT_BATCH_SIZE;
+  const limit = params.limit ?? duePlayers.length;
   const batch = duePlayers.slice(0, limit);
+
+  logger.info("syncGroupPlayers started", {
+    groupId: params.groupId,
+    force: params.force ?? false,
+    totalPlayers: players.length,
+    duePlayers: duePlayers.length,
+    batchSize: batch.length,
+    limitApplied: params.limit ?? null,
+  });
+
   const results: SyncAttemptResult[] = [];
 
   for (const player of batch) {
@@ -208,7 +221,18 @@ export async function syncGroupPlayers(params: {
     await sleep(API_DELAY_MS);
   }
 
-  return buildSyncResult({ results, totalDue: duePlayers.length });
+  const result = buildSyncResult({ results, totalDue: duePlayers.length });
+
+  logger.info("syncGroupPlayers completed", {
+    groupId: params.groupId,
+    attempted: result.attempted,
+    succeeded: result.succeeded,
+    failed: result.failed,
+    totalDue: result.totalDue,
+    errors: result.errors,
+  });
+
+  return result;
 }
 
 async function syncPlayer(player: {
