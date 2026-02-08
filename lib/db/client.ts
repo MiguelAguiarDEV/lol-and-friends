@@ -1,10 +1,24 @@
 /** Turso + Drizzle client wiring for the data layer. */
+
+import type { ResultSet } from "@libsql/client";
 import { createClient } from "@libsql/client";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import { drizzle } from "drizzle-orm/libsql";
+import type { SQLiteTransaction } from "drizzle-orm/sqlite-core";
 import * as schema from "@/lib/db/schema";
 
-type Db = LibSQLDatabase<typeof schema>;
+export type Db = LibSQLDatabase<typeof schema>;
+
+/** Tipo que acepta tanto el cliente principal como una transacción activa. */
+export type DbConnection =
+  | Db
+  | SQLiteTransaction<
+      "async",
+      ResultSet,
+      typeof schema,
+      ExtractTablesWithRelations<typeof schema>
+    >;
 
 let cachedDb: Db | null = null;
 let nullDb: Db | null = null;

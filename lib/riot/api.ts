@@ -12,6 +12,17 @@ if (!apiKey) {
   logger.warn("Missing RIOT_API_KEY in environment");
 }
 
+/** Error genérico de la API de Riot con código HTTP. */
+export class RiotApiError extends Error {
+  status: number;
+
+  constructor(params: { status: number; body: string }) {
+    super(`Riot API error ${params.status}: ${params.body}`);
+    this.name = "RiotApiError";
+    this.status = params.status;
+  }
+}
+
 export class RiotRateLimitError extends Error {
   retryAfterSeconds: number;
   limitType: string | null;
@@ -72,7 +83,7 @@ async function riotFetch<T>(url: string): Promise<T> {
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Riot API error ${response.status}: ${text}`);
+    throw new RiotApiError({ status: response.status, body: text });
   }
 
   return (await response.json()) as T;
@@ -140,6 +151,22 @@ export async function getSummonerByPuuid(params: {
   puuid: string;
 }) {
   const url = `https://${params.platformRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${params.puuid}`;
+  return riotFetch<RiotSummoner>(url);
+}
+
+/**
+ * Obtiene summoner por nombre visible en la región de plataforma.
+ * @deprecated Usar {@link getAccountByRiotId} con Riot ID (gameName#tagLine). Solo se mantiene como fallback para cuentas sin Riot ID.
+ * @param params - Región de plataforma y nombre de summoner.
+ * @returns Summoner con ID y PUUID.
+ */
+export async function getSummonerByName(params: {
+  platformRegion: RiotPlatformRegion;
+  summonerName: string;
+}) {
+  const url = `https://${params.platformRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${encodeURIComponent(
+    params.summonerName,
+  )}`;
   return riotFetch<RiotSummoner>(url);
 }
 

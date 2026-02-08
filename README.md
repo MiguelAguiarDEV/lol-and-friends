@@ -66,6 +66,9 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 
 > Nota: la primera vez ejecutar `bunx playwright install` para descargar navegadores.
 
+## Requisitos de runtime
+- Node.js `>=20.9.0`.
+
 ## Variables de entorno
 - `TURSO_DATABASE_URL`
 - `TURSO_AUTH_TOKEN`
@@ -74,8 +77,10 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - `RIOT_API_KEY`
 - `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
 - `RIOT_ACCEPT_LANGUAGE` (opcional)
-- `CRON_SECRET` (opcional, si quieres proteger `/api/sync` con token)
+- `CRON_SECRET` (**requerido fuera de desarrollo**) para autorizar `/api/sync`.
 - `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
+
+`/api/sync` acepta autenticación solo por `Authorization: Bearer <CRON_SECRET>` en entornos no development.
 
 ## CI/CD y calidad
 - **GitHub Actions**: `.github/workflows/ci.yml` ejecuta `lint`, `test`, `build` y `test:e2e` en cada push y PR.

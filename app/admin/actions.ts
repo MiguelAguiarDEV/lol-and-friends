@@ -30,6 +30,11 @@ import {
   settingsSchema,
 } from "@/lib/validations/admin";
 
+type AddPlayerActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+};
+
 /**
  * Garantiza una sesión válida y sincroniza usuario en DB.
  * @returns IDs de sesión.
@@ -123,45 +128,88 @@ export async function updateGroupSettingsAction(formData: FormData) {
  * Añade un jugador a un grupo.
  * @param formData - Datos del formulario.
  */
-export async function addPlayerAction(formData: FormData) {
-  const { userId, isAdmin } = await requireUser();
-  const parsed = playerSchema.parse({
-    groupId: formData.get("groupId"),
-    gameName: formData.get("gameName"),
-    tagLine: formData.get("tagLine"),
-    region: formData.get("region"),
-    queueType: formData.get("queueType"),
-  });
+export async function addPlayerAction(
+  previousStateOrFormData: AddPlayerActionState | FormData,
+  maybeFormData?: FormData,
+) {
+  const formData =
+    maybeFormData ??
+    (previousStateOrFormData instanceof FormData
+      ? previousStateOrFormData
+      : null);
 
-  if (!isAdmin) {
-    await assertGroupAccess({ userId, groupId: parsed.groupId });
+  if (!formData) {
+    return {
+      status: "error",
+      message: "No se recibió el formulario de alta.",
+    } satisfies AddPlayerActionState;
   }
-  const region = normalizePlatformRegion(parsed.region);
 
-  let player = await findPlayerByIdentity({
-    gameName: parsed.gameName,
-    tagLine: parsed.tagLine,
-    region,
-  });
+  try {
+    const { userId, isAdmin } = await requireUser();
+    const parsed = playerSchema.parse({
+      groupId: formData.get("groupId"),
+      gameName: formData.get("gameName"),
+      tagLine: formData.get("tagLine"),
+      region: formData.get("region"),
+      queueType: formData.get("queueType"),
+    });
 
-  if (!player) {
-    player = await createPlayer({
-      id: crypto.randomUUID(),
+    if (!isAdmin) {
+      await assertGroupAccess({ userId, groupId: parsed.groupId });
+    }
+    const region = normalizePlatformRegion(parsed.region);
+
+    let player = await findPlayerByIdentity({
       gameName: parsed.gameName,
       tagLine: parsed.tagLine,
       region,
-      queueType: parsed.queueType,
-      opggUrl: `https://www.op.gg/summoners/${opggRegion(region)}/${encodeURIComponent(
-        `${parsed.gameName}-${parsed.tagLine}`,
-      )}`,
     });
-  }
 
-  if (player) {
+    if (!player) {
+      player = await createPlayer({
+        id: crypto.randomUUID(),
+        gameName: parsed.gameName,
+        tagLine: parsed.tagLine,
+        region,
+        queueType: parsed.queueType,
+        opggUrl: `https://www.op.gg/summoners/${opggRegion(region)}/${encodeURIComponent(
+          `${parsed.gameName}-${parsed.tagLine}`,
+        )}`,
+      });
+    }
+
+    if (!player) {
+      logger.error("createPlayer returned null", {
+        gameName: parsed.gameName,
+        tagLine: parsed.tagLine,
+        region,
+      });
+      return {
+        status: "error",
+        message: "No se pudo crear el jugador.",
+      } satisfies AddPlayerActionState;
+    }
+
     await addPlayerToGroup({ groupId: parsed.groupId, playerId: player.id });
-  }
 
-  revalidatePath("/admin");
+    revalidatePath("/admin");
+    return {
+      status: "success",
+      message: `Jugador ${parsed.gameName}#${parsed.tagLine} guardado correctamente.`,
+    } satisfies AddPlayerActionState;
+  } catch (error) {
+    logger.error("Failed to add player from admin modal", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar el jugador. Revisa los datos.",
+    } satisfies AddPlayerActionState;
+  }
 }
 
 /**

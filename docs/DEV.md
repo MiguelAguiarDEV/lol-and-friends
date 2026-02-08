@@ -11,10 +11,15 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
   - `api/sync/route.ts` — cron de sync Riot
   - `hello-world/page.tsx` — verificación de funcionamiento
 - `components/groups/` — tarjetas/listado de grupos
-- `components/players/players-table.tsx` — tabla + cards mobile
+- `components/admin/` — bloques de UI para panel admin (crear grupo, overview y detalle)
+- `components/group/` — bloques de UI para vista de grupo público
+- `components/layout/` — layout reutilizable (navbar, shell, headers, cards)
+- `components/players/` — tabla pública modular + orden + edición inline admin
+- `components/ui/` — primitives UI reutilizables (`button`, `modal`, `input`, `label`, `select`, `textarea`, `badge`)
+- `components/theme/theme-switcher.tsx` — selector de tema claro/oscuro
 - `lib/db/` — cliente, schema y queries (Drizzle)
   - `migrations/` — migraciones generadas
-- `lib/riot/` — API, regiones, colas y lógica de sync
+- `lib/riot/` — API, regiones, colas, lógica de sync y tipos de intento (`sync-attempts`)
 - `lib/players/` — métricas y ranking
 - `lib/utils/` — helpers (slug/time)
 - `docs/screenshots/` — capturas UI (Playwright)
@@ -32,6 +37,9 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `bun run db:generate` — generar migraciones Drizzle
 - `bun run db:migrate` — aplicar migraciones
 
+## Requisitos de runtime
+- Node.js `>=20.9.0`
+
 ## Variables de entorno
 - `TURSO_DATABASE_URL`
 - `TURSO_AUTH_TOKEN`
@@ -40,7 +48,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `RIOT_API_KEY`
 - `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
 - `RIOT_ACCEPT_LANGUAGE` (opcional)
-- `CRON_SECRET` (opcional)
+- `CRON_SECRET` (requerido fuera de development)
 - `CRON_SYNC_URL` (opcional, URL usada por GitHub Actions para el cron)
 
 ## Testing
@@ -59,12 +67,28 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 
 ## Sync Riot
 - Endpoint: `GET /api/sync`
+- Auth endpoint sync: `Authorization: Bearer <CRON_SECRET>` fuera de development.
 - Cron en GitHub Actions cada 10 minutos.
 - Sync incremental por lotes (no actualiza todo a la vez).
 - Manual sync desde `/admin` con cooldown configurable.
 - Cola y región seleccionables desde admin (cola por jugador).
 - Reintentos con backoff cuando hay rate limit (429).
 - Botón público en `/g/[slug]` (cooldown 1 min).
+- Resolución de PUUID con fallback: Riot ID y, si falla, búsqueda por nombre de summoner.
+- Fallback de cola en ranked: si la cola preferida no existe, usa otra entrada disponible (por ejemplo Flex).
+- Respuesta del endpoint: `{ ok, attempted, succeeded, failed, totalDue, errors, limit }`.
+
+## UI/UX reciente
+- Tema de la app con selector global `Claro/Oscuro` y tokens de color semánticos en `app/globals.css`.
+- Navbar global con navegación principal, switch de tema con iconos y menú de cuenta con avatar.
+- Navbar: switch de tema por icono circular (sin bloque cuadrado en hover).
+- Tabla pública: ordenación por clic en cabeceras (`LP`, `Liga`, `Winrate`, `Últ. actualización`) con soporte asc/desc e indicadores visuales.
+- Modal de “Añadir jugador” en admin: feedback visible de éxito/error al enviar.
+- Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar intervalo de sync y cooldown desde la propia página.
+- Vista pública de grupo (`/g/[slug]`): si el usuario es admin, puede editar `objetivo`, `checkpoint mensual` y `notas` de cada jugador desde la tabla.
+- Panel admin: creación de grupo por modal activado desde botón.
+- Cooldown manual mínimo configurable: `0.5` minutos (30 segundos).
+- Admin UI refactorizada a componentes: cards de estadísticas, directorio responsive (cards/table) y formularios consistentes con primitives.
 
 ## Screenshots (Playwright)
 - Ejecutar: `node scripts/capture-screens.mjs`
