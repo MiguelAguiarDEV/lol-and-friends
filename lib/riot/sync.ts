@@ -21,7 +21,35 @@ import {
   type RiotAccountRegion,
   type RiotPlatformRegion,
 } from "@/lib/riot/regions";
+import type { SyncAttemptResult } from "@/lib/riot/sync-attempts";
 import { isPast, nowIso } from "@/lib/utils/time";
+
+/** Resultado agregado de una operación de sincronización. */
+export interface SyncResult {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  totalDue: number;
+  errors: Array<{ playerId: string; error: string }>;
+}
+
+/** Agrega resultados individuales en un resumen de sincronización. */
+function buildSyncResult(params: {
+  results: SyncAttemptResult[];
+  totalDue: number;
+}): SyncResult {
+  const { results, totalDue } = params;
+  const succeeded = results.filter((r) => r.outcome === "success").length;
+  const failed = results.filter((r) => r.outcome === "failed").length;
+  const errors = results
+    .filter(
+      (r): r is Extract<SyncAttemptResult, { outcome: "failed" }> =>
+        r.outcome === "failed",
+    )
+    .map((r) => ({ playerId: r.playerId, error: r.error }));
+
+  return { attempted: results.length, succeeded, failed, totalDue, errors };
+}
 
 const QUEUE_SOLO = "RANKED_SOLO_5x5";
 const QUEUE_FLEX = "RANKED_FLEX_SR";
@@ -117,16 +145,15 @@ export async function syncDuePlayers(params?: { limit?: number }) {
     });
 
   const limit = params?.limit ?? DEFAULT_BATCH_SIZE;
+  const batch = duePlayers.slice(0, limit);
+  const results: SyncAttemptResult[] = [];
 
-  for (const player of duePlayers.slice(0, limit)) {
-    await syncPlayer(player);
+  for (const player of batch) {
+    results.push(await syncPlayer(player));
     await sleep(API_DELAY_MS);
   }
 
-  return {
-    processed: Math.min(duePlayers.length, limit),
-    totalDue: duePlayers.length,
-  };
+  return buildSyncResult({ results, totalDue: duePlayers.length });
 }
 
 /**
@@ -144,7 +171,7 @@ export async function syncGroupPlayers(params: {
 }) {
   const settings = await getGroupSyncSettings(params.groupId);
   if (!settings) {
-    return { processed: 0, totalDue: 0 };
+    return buildSyncResult({ results: [], totalDue: 0 });
   }
 
   const players = await getGroupPlayers(params.groupId);
@@ -160,25 +187,26 @@ export async function syncGroupPlayers(params: {
   });
 
   const limit = params.limit ?? DEFAULT_BATCH_SIZE;
+  const batch = duePlayers.slice(0, limit);
+  const results: SyncAttemptResult[] = [];
 
-  for (const player of duePlayers.slice(0, limit)) {
-    await syncPlayer({
-      id: player.id,
-      gameName: player.gameName,
-      tagLine: player.tagLine,
-      region: player.region,
-      queueType: (player.queueType ?? QUEUE_SOLO) as RiotQueueType,
-      puuid: player.puuid ?? null,
-      lastSyncAt: player.lastSyncAt ?? null,
-      minInterval: settings.syncIntervalMinutes,
-    });
+  for (const player of batch) {
+    results.push(
+      await syncPlayer({
+        id: player.id,
+        gameName: player.gameName,
+        tagLine: player.tagLine,
+        region: player.region,
+        queueType: (player.queueType ?? QUEUE_SOLO) as RiotQueueType,
+        puuid: player.puuid ?? null,
+        lastSyncAt: player.lastSyncAt ?? null,
+        minInterval: settings.syncIntervalMinutes,
+      }),
+    );
     await sleep(API_DELAY_MS);
   }
 
-  return {
-    processed: Math.min(duePlayers.length, limit),
-    totalDue: duePlayers.length,
-  };
+  return buildSyncResult({ results, totalDue: duePlayers.length });
 }
 
 async function syncPlayer(player: {
@@ -190,7 +218,7 @@ async function syncPlayer(player: {
   puuid: string | null;
   lastSyncAt: string | null;
   minInterval: number;
-}) {
+}): Promise<SyncAttemptResult> {
   const platformRegion = normalizePlatformRegion(player.region);
   const accountRegion = accountRegionForPlatform(platformRegion);
   const now = nowIso();
@@ -271,13 +299,18 @@ async function syncPlayer(player: {
         Boolean(selectedEntry) &&
         selectedEntry.queueType !== preferredQueueType,
     });
+
+    return { playerId: player.id, outcome: "success" };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     logger.error("Riot sync failed", {
       playerId: player.id,
       gameName: player.gameName,
       tagLine: player.tagLine,
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
     });
+
+    return { playerId: player.id, outcome: "failed", error: message };
   }
 }
 
