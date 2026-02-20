@@ -59,7 +59,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 
 ## CI/CD y hooks
 - GitHub Actions: `.github/workflows/ci.yml` ejecuta lint/test/build/test:e2e en push y PR.
-- Cron (GitHub Actions): `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
+- Cron (GitHub Actions): `.github/workflows/cron-sync.yml` quedó desactivado para ejecución programada (solo manual `workflow_dispatch`).
 - Hooks locales (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`
@@ -68,7 +68,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 ## Sync Riot
 - Endpoint: `GET /api/sync`
 - Auth endpoint sync: `Authorization: Bearer <CRON_SECRET>` fuera de development.
-- Cron en GitHub Actions cada 10 minutos.
+- Workflow de sync en GitHub Actions sin programación automática (solo ejecución manual).
 - Sync incremental por lotes (no actualiza todo a la vez).
 - Manual sync desde `/admin` con cooldown configurable.
 - Cola y región seleccionables desde admin (cola por jugador).
