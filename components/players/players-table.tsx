@@ -31,7 +31,7 @@ type PlayersTableProps = {
 export function PlayersTable({
   players,
   groupSlug,
-  sort = "winrate",
+  sort = "rank",
   direction = "desc",
   title,
   subtitle,
