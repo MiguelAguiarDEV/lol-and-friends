@@ -48,4 +48,34 @@ describe("PlayersTable default sorting", () => {
     expect(within(rows[1]).getByText(/MidRank/)).toBeInTheDocument();
     expect(within(rows[2]).getByText(/LowRank/)).toBeInTheDocument();
   });
+
+  it("renders KDA and averages when provided", () => {
+    const players = [
+      {
+        id: "kda-player",
+        gameName: "Stats",
+        tagLine: "EUW",
+        region: "euw1",
+        tier: "PLATINUM",
+        division: "I",
+        lp: 10,
+        kda: 3.5,
+        avgKills: 5,
+        avgDeaths: 4,
+        avgAssists: 7,
+      },
+    ];
+
+    render(
+      <PlayersTable
+        players={players}
+        groupSlug="grupo"
+        showHeader={false}
+        showSortHint={false}
+      />,
+    );
+
+    expect(screen.getAllByText("3.50").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("5.0/4.0/7.0").length).toBeGreaterThan(0);
+  });
 });

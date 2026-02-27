@@ -36,6 +36,8 @@ jest.mock("@/lib/db/client", () => ({
 const mockGetAccountByRiotId = jest.fn();
 const mockGetSummonerByName = jest.fn();
 const mockGetLeagueEntriesByPuuid = jest.fn();
+const mockGetRecentRankedMatchIds = jest.fn();
+const mockGetMatchById = jest.fn();
 
 jest.mock("@/lib/riot/api", () => {
   const actual = jest.requireActual("@/lib/riot/api");
@@ -45,6 +47,9 @@ jest.mock("@/lib/riot/api", () => {
     getSummonerByName: (...args: unknown[]) => mockGetSummonerByName(...args),
     getLeagueEntriesByPuuid: (...args: unknown[]) =>
       mockGetLeagueEntriesByPuuid(...args),
+    getRecentRankedMatchIds: (...args: unknown[]) =>
+      mockGetRecentRankedMatchIds(...args),
+    getMatchById: (...args: unknown[]) => mockGetMatchById(...args),
   };
 });
 
@@ -108,6 +113,8 @@ describe("syncPlayer — queue preference (Fix 2)", () => {
     mockGetLeagueEntriesByPuuid.mockResolvedValue([SOLO_ENTRY, FLEX_ENTRY]);
     mockUpdatePlayerSync.mockResolvedValue(undefined);
     mockInsertRankSnapshot.mockResolvedValue(undefined);
+    mockGetRecentRankedMatchIds.mockResolvedValue([]);
+    mockGetMatchById.mockResolvedValue(null);
   });
 
   it("writes preferredQueueType to player record, not the fallback queue", async () => {
@@ -148,6 +155,8 @@ describe("syncPlayer — transaction wrap (Fix 1)", () => {
     mockGetLeagueEntriesByPuuid.mockResolvedValue([SOLO_ENTRY]);
     mockUpdatePlayerSync.mockResolvedValue(undefined);
     mockInsertRankSnapshot.mockResolvedValue(undefined);
+    mockGetRecentRankedMatchIds.mockResolvedValue([]);
+    mockGetMatchById.mockResolvedValue(null);
   });
 
   it("calls updatePlayerSync and insertRankSnapshot inside db.transaction", async () => {
@@ -179,6 +188,53 @@ describe("syncPlayer — transaction wrap (Fix 1)", () => {
   });
 });
 
+describe("syncPlayer — recent KDA aggregation", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.RIOT_API_KEY = "test-key";
+
+    mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
+      cb({}),
+    );
+    mockGetPlayersForSync.mockResolvedValue([makePlayerRow()]);
+    mockGetLeagueEntriesByPuuid.mockResolvedValue([SOLO_ENTRY]);
+    mockUpdatePlayerSync.mockResolvedValue(undefined);
+    mockInsertRankSnapshot.mockResolvedValue(undefined);
+    mockGetRecentRankedMatchIds.mockResolvedValue(["match-1"]);
+    mockGetMatchById.mockResolvedValue({
+      metadata: { matchId: "match-1" },
+      info: {
+        queueId: 420,
+        participants: [
+          { puuid: "existing-puuid", kills: 6, deaths: 3, assists: 9 },
+          { puuid: "other", kills: 1, deaths: 1, assists: 1 },
+        ],
+      },
+    });
+  });
+
+  it("stores KDA averages from recent ranked matches when available", async () => {
+    await syncDuePlayers({ limit: 1 });
+
+    expect(mockGetRecentRankedMatchIds).toHaveBeenCalledTimes(1);
+    expect(mockGetMatchById).toHaveBeenCalledTimes(1);
+    expect(mockUpdatePlayerSync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        avgKills: 6,
+        avgDeaths: 3,
+        avgAssists: 9,
+      }),
+    );
+    const call = mockUpdatePlayerSync.mock.calls[0]?.[0] as {
+      avgKills?: number;
+      avgDeaths?: number;
+      avgAssists?: number;
+      kda?: number;
+    };
+    expect(call.kda).toBeCloseTo(5);
+  });
+});
+
 describe("resolvePuuid — 404-only fallback (Fix 3)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -190,6 +246,8 @@ describe("resolvePuuid — 404-only fallback (Fix 3)", () => {
     mockUpdatePlayerSync.mockResolvedValue(undefined);
     mockInsertRankSnapshot.mockResolvedValue(undefined);
     mockGetLeagueEntriesByPuuid.mockResolvedValue([SOLO_ENTRY]);
+    mockGetRecentRankedMatchIds.mockResolvedValue([]);
+    mockGetMatchById.mockResolvedValue(null);
   });
 
   it("falls back to getSummonerByName on 404 RiotApiError", async () => {

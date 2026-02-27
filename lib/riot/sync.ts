@@ -7,9 +7,12 @@ import {
   updatePlayerSync,
 } from "@/lib/db/queries";
 import { logger } from "@/lib/logger";
+import { getKda } from "@/lib/players/metrics";
 import {
   getAccountByRiotId,
   getLeagueEntriesByPuuid,
+  getMatchById,
+  getRecentRankedMatchIds,
   getSummonerByName,
   RiotApiError,
   type RiotLeagueEntry,
@@ -58,6 +61,14 @@ const QUEUE_FLEX = "RANKED_FLEX_SR";
 const DEFAULT_BATCH_SIZE = 5;
 const API_DELAY_MS = 350;
 const RATE_LIMIT_RETRIES = 2;
+const MATCH_SAMPLE_COUNT = 5;
+
+type KdaSummary = {
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  kda: number;
+};
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -87,6 +98,91 @@ async function withRateLimitRetry<T>(
       }
       throw error;
     }
+  }
+}
+
+async function fetchRecentKda(params: {
+  accountRegion: RiotAccountRegion;
+  puuid: string;
+}) {
+  const matchIds = await withRateLimitRetry(
+    () =>
+      getRecentRankedMatchIds({
+        accountRegion: params.accountRegion,
+        puuid: params.puuid,
+        count: MATCH_SAMPLE_COUNT,
+      }),
+    {
+      action: "getRecentRankedMatchIds",
+      puuid: params.puuid,
+    },
+  );
+
+  if (matchIds.length === 0) {
+    return null;
+  }
+
+  let totalKills = 0;
+  let totalDeaths = 0;
+  let totalAssists = 0;
+  let counted = 0;
+
+  for (const matchId of matchIds) {
+    const match = await withRateLimitRetry(
+      () =>
+        getMatchById({
+          accountRegion: params.accountRegion,
+          matchId,
+        }),
+      {
+        action: "getMatchById",
+        matchId,
+      },
+    );
+    const participant = match.info.participants.find(
+      (entry) => entry.puuid === params.puuid,
+    );
+    if (!participant) {
+      continue;
+    }
+
+    totalKills += participant.kills ?? 0;
+    totalDeaths += participant.deaths ?? 0;
+    totalAssists += participant.assists ?? 0;
+    counted += 1;
+    await sleep(API_DELAY_MS);
+  }
+
+  if (counted === 0) {
+    return null;
+  }
+
+  const avgKills = totalKills / counted;
+  const avgDeaths = totalDeaths / counted;
+  const avgAssists = totalAssists / counted;
+
+  const kda = getKda({
+    kills: avgKills,
+    deaths: avgDeaths,
+    assists: avgAssists,
+  });
+
+  return { avgKills, avgDeaths, avgAssists, kda } satisfies KdaSummary;
+}
+
+async function safeFetchRecentKda(params: {
+  accountRegion: RiotAccountRegion;
+  puuid: string;
+}) {
+  try {
+    return await fetchRecentKda(params);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.warn("Riot match fetch failed", {
+      puuid: params.puuid,
+      error: message,
+    });
+    return null;
   }
 }
 
@@ -287,6 +383,10 @@ async function syncPlayer(player: {
       preferredQueueType,
     });
     const queueTypeUsed = selectedEntry?.queueType ?? preferredQueueType;
+    const recentKda = await safeFetchRecentKda({
+      accountRegion,
+      puuid,
+    });
 
     await db.transaction(async (tx) => {
       await updatePlayerSync({
@@ -301,6 +401,10 @@ async function syncPlayer(player: {
         opggUrl: `https://www.op.gg/summoners/${opggRegion(platformRegion)}/${encodeURIComponent(
           `${player.gameName}-${player.tagLine}`,
         )}`,
+        avgKills: recentKda?.avgKills ?? null,
+        avgDeaths: recentKda?.avgDeaths ?? null,
+        avgAssists: recentKda?.avgAssists ?? null,
+        kda: recentKda?.kda ?? null,
         lastSyncAt: now,
         tx,
       });
