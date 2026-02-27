@@ -20,6 +20,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - `/` — listado de grupos públicos
 - `/g/[slug]` — tabla del grupo
 - `/admin` — panel admin (requiere login)
+- `/profile` — perfil básico con email de la cuenta
 - `/api/sync` — endpoint para cron (sync incremental)
 - `/hello-world` — ruta de verificación
 
@@ -74,6 +75,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 - `TURSO_AUTH_TOKEN`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `ADMIN_EMAILS` (opcional, CSV de emails con permiso de admin)
 - `RIOT_API_KEY`
 - `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
 - `RIOT_ACCEPT_LANGUAGE` (opcional)
@@ -84,7 +86,7 @@ Migrar un “reto con amigos” que hoy se gestiona en Excel a una **web** despl
 
 ## CI/CD y calidad
 - **GitHub Actions**: `.github/workflows/ci.yml` ejecuta `lint`, `test`, `build` y `test:e2e` en cada push y PR.
-- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
+- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` solo se ejecuta manualmente (`workflow_dispatch`) y llama a `/api/sync` usando `CRON_SECRET` y `CRON_SYNC_URL` (opcional).
 - **Hooks locales** (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`
