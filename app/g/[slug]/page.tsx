@@ -90,10 +90,15 @@ export default async function GroupPage({
 }
 
 function normalizeSort(value?: string): PlayerSortKey {
-  if (value === "lp" || value === "rank" || value === "updated") {
+  if (
+    value === "lp" ||
+    value === "rank" ||
+    value === "updated" ||
+    value === "winrate"
+  ) {
     return value;
   }
-  return "winrate";
+  return "rank";
 }
 
 function normalizeDirection(value?: string): PlayerSortDirection {
