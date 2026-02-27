@@ -38,6 +38,10 @@ const screenshotPlayers = [
     notes: "Racha positiva en la última semana.",
     objective: "DIAMOND III",
     monthCheckpoint: "En progreso",
+    avgKills: 6.2,
+    avgDeaths: 4.1,
+    avgAssists: 7.5,
+    kda: 3.31,
     lastSyncAt: screenshotNow,
   },
   {
@@ -54,6 +58,10 @@ const screenshotPlayers = [
     notes: "Priorizar dúo bot.",
     objective: "EMERALD IV",
     monthCheckpoint: "Fuerte",
+    avgKills: 5.5,
+    avgDeaths: 5.0,
+    avgAssists: 6.9,
+    kda: 2.48,
     lastSyncAt: screenshotNow,
   },
 ];
@@ -193,6 +201,10 @@ export async function getGroupBySlug(slug: string) {
       objective: players.objective,
       monthCheckpoint: players.monthCheckpoint,
       lastSyncAt: players.lastSyncAt,
+      avgKills: players.avgKills,
+      avgDeaths: players.avgDeaths,
+      avgAssists: players.avgAssists,
+      kda: players.kda,
     })
     .from(players)
     .innerJoin(groupPlayers, eq(groupPlayers.playerId, players.id))
@@ -391,6 +403,10 @@ export async function getGroupPlayers(groupId: string) {
       objective: players.objective,
       monthCheckpoint: players.monthCheckpoint,
       lastSyncAt: players.lastSyncAt,
+      avgKills: players.avgKills,
+      avgDeaths: players.avgDeaths,
+      avgAssists: players.avgAssists,
+      kda: players.kda,
     })
     .from(players)
     .innerJoin(groupPlayers, eq(groupPlayers.playerId, players.id))
@@ -456,6 +472,10 @@ export async function updatePlayerSync(params: {
   wins?: number | null;
   losses?: number | null;
   opggUrl?: string | null;
+  avgKills?: number | null;
+  avgDeaths?: number | null;
+  avgAssists?: number | null;
+  kda?: number | null;
   lastSyncAt: string;
   tx?: DbConnection;
 }) {
@@ -471,6 +491,10 @@ export async function updatePlayerSync(params: {
       wins: params.wins,
       losses: params.losses,
       opggUrl: params.opggUrl,
+      avgKills: params.avgKills,
+      avgDeaths: params.avgDeaths,
+      avgAssists: params.avgAssists,
+      kda: params.kda,
       lastSyncAt: params.lastSyncAt,
       updatedAt: sql`(CURRENT_TIMESTAMP)`,
     })

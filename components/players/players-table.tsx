@@ -5,7 +5,13 @@ import type {
   PlayerSortDirection,
   PlayerSortKey,
 } from "@/components/players/types";
-import { formatPercent, getGames, getWinrate } from "@/lib/players/metrics";
+import {
+  formatKda,
+  formatPercent,
+  getGames,
+  getKda,
+  getWinrate,
+} from "@/lib/players/metrics";
 import { getRankScore } from "@/lib/players/rank";
 
 const dateFormatter = new Intl.DateTimeFormat("es-ES", {
@@ -112,6 +118,7 @@ export function PlayersTable({
                   targetSort="winrate"
                 />
               </th>
+              <th className="px-4 py-3">KDA</th>
               <th className="px-4 py-3">Objetivo</th>
               <th className="px-4 py-3">
                 <PlayerSortHeader
@@ -153,6 +160,18 @@ function PlayerMobileCard(props: {
   const losses = props.player.losses ?? 0;
   const games = getGames({ wins, losses });
   const winrate = getWinrate({ wins, losses });
+  const avgKills = props.player.avgKills ?? null;
+  const avgDeaths = props.player.avgDeaths ?? null;
+  const avgAssists = props.player.avgAssists ?? null;
+  const kda =
+    props.player.kda ??
+    (avgKills !== null && avgDeaths !== null && avgAssists !== null
+      ? getKda({
+          kills: avgKills,
+          deaths: avgDeaths,
+          assists: avgAssists,
+        })
+      : null);
 
   return (
     <article className="rounded-xl border border-border bg-card p-4 shadow-sm">
@@ -182,13 +201,20 @@ function PlayerMobileCard(props: {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-muted-foreground sm:grid-cols-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-muted-foreground sm:grid-cols-4">
         <PlayerMetric label="LP" value={props.player.lp ?? "—"} />
         <div>
           <PlayerMetric label="W/L" value={`${wins}/${losses}`} />
           <div className="text-xs text-muted-foreground">{games} games</div>
         </div>
         <PlayerMetric label="WR" value={formatPercent(winrate)} />
+        <div>
+          <PlayerMetric label="KDA" value={formatKda(kda)} />
+          <div className="text-xs text-muted-foreground">
+            {formatAverage(avgKills)}/{formatAverage(avgDeaths)}/
+            {formatAverage(avgAssists)}
+          </div>
+        </div>
         <div>
           <PlayerMetric
             label="Objetivo"
@@ -252,6 +278,13 @@ function PlayerMetric(props: { label: string; value: string | number }) {
   );
 }
 
+function formatAverage(value: number | null) {
+  if (value === null) {
+    return "—";
+  }
+  return value.toFixed(1);
+}
+
 function PlayerDesktopRow(props: {
   player: PlayerRow;
   showAdminEditor: boolean;
@@ -262,6 +295,18 @@ function PlayerDesktopRow(props: {
   const losses = props.player.losses ?? 0;
   const games = getGames({ wins, losses });
   const winrate = getWinrate({ wins, losses });
+  const avgKills = props.player.avgKills ?? null;
+  const avgDeaths = props.player.avgDeaths ?? null;
+  const avgAssists = props.player.avgAssists ?? null;
+  const kda =
+    props.player.kda ??
+    (avgKills !== null && avgDeaths !== null && avgAssists !== null
+      ? getKda({
+          kills: avgKills,
+          deaths: avgDeaths,
+          assists: avgAssists,
+        })
+      : null);
 
   return (
     <tr className="hover:bg-muted/35">
@@ -291,6 +336,13 @@ function PlayerDesktopRow(props: {
         <div className="text-xs text-muted-foreground">{games} games</div>
       </td>
       <td className="px-4 py-3 font-medium">{formatPercent(winrate)}</td>
+      <td className="px-4 py-3">
+        <div className="font-medium">{formatKda(kda)}</div>
+        <div className="text-xs text-muted-foreground">
+          {formatAverage(avgKills)}/{formatAverage(avgDeaths)}/
+          {formatAverage(avgAssists)}
+        </div>
+      </td>
       <td className="px-4 py-3">
         {props.player.objective ?? "—"}
         <div className="text-xs text-muted-foreground">

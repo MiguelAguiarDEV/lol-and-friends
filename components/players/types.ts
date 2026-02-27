@@ -17,4 +17,8 @@ export type PlayerRow = {
   objective?: string | null;
   monthCheckpoint?: string | null;
   lastSyncAt?: string | null;
+  kda?: number | null;
+  avgKills?: number | null;
+  avgDeaths?: number | null;
+  avgAssists?: number | null;
 };

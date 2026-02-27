@@ -74,6 +74,10 @@ export default async function GroupPage({
           objective: player.objective,
           monthCheckpoint: player.monthCheckpoint,
           lastSyncAt: player.lastSyncAt,
+          kda: player.kda,
+          avgKills: player.avgKills,
+          avgDeaths: player.avgDeaths,
+          avgAssists: player.avgAssists,
         }))}
         sort={sort}
         direction={direction}

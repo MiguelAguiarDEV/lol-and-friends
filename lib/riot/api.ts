@@ -112,6 +112,23 @@ export type RiotLeagueEntry = {
   losses: number;
 };
 
+export type RiotMatchParticipant = {
+  puuid: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+};
+
+export type RiotMatch = {
+  metadata: {
+    matchId: string;
+  };
+  info: {
+    queueId: number;
+    participants: RiotMatchParticipant[];
+  };
+};
+
 /**
  * Obtiene entradas de liga por PUUID.
  * @param params - Región de plataforma y PUUID.
@@ -181,4 +198,32 @@ export async function getLeagueEntriesBySummoner(params: {
 }) {
   const url = `https://${params.platformRegion}.api.riotgames.com/lol/league/v4/entries/by-summoner/${params.summonerId}`;
   return riotFetch<RiotLeagueEntry[]>(url);
+}
+
+/**
+ * Obtiene IDs de partidas recientes para un PUUID.
+ * @param params - Región (routing) y PUUID del jugador.
+ * @returns Lista de IDs de partida.
+ */
+export async function getRecentRankedMatchIds(params: {
+  accountRegion: RiotAccountRegion;
+  puuid: string;
+  count?: number;
+}) {
+  const count = params.count ?? 10;
+  const url = `https://${params.accountRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${params.puuid}/ids?type=ranked&start=0&count=${count}`;
+  return riotFetch<string[]>(url);
+}
+
+/**
+ * Obtiene detalles de una partida.
+ * @param params - Región (routing) e ID de partida.
+ * @returns Datos de la partida con participantes.
+ */
+export async function getMatchById(params: {
+  accountRegion: RiotAccountRegion;
+  matchId: string;
+}) {
+  const url = `https://${params.accountRegion}.api.riotgames.com/lol/match/v5/matches/${params.matchId}`;
+  return riotFetch<RiotMatch>(url);
 }
