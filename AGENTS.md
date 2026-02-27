@@ -14,9 +14,12 @@ app/
     [slug]/page.tsx # Tabla pública por grupo
   hello-world/
     page.tsx # Ruta de verificación /hello-world
+  profile/
+    page.tsx # Perfil básico (Clerk)
   admin/
     page.tsx # Panel admin (protegido)
     actions.ts # Server Actions (mutaciones admin)
+  sign-in/, sign-up/ # Rutas de autenticación Clerk
   api/
     sync/route.ts # Cron sync Riot
 components/
@@ -28,8 +31,11 @@ lib/
     schema.ts # Drizzle schema
     queries.ts # Consultas reutilizables
     migrations/ # Migraciones Drizzle
+  auth/ # Allowlist de admin via ADMIN_EMAILS
   riot/ # API + sync + regiones
   players/ # Métricas + ranking
+  types/ # Tipos compartidos
+  validations/ # Schemas de formularios
   utils/ # helpers (slug/time)
   logger.ts # logger estructurado
 docs/
@@ -74,7 +80,7 @@ tests-e2e/ # E2E tests (Playwright)
 ## CI/CD y Git Hooks
 
 - **GitHub Actions**: `.github/workflows/ci.yml` corre `lint`, `test`, `build` y `test:e2e` en push/PR.
-- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` llama a `/api/sync` cada 10 minutos.
+- **Cron (GitHub Actions)**: `.github/workflows/cron-sync.yml` solo se ejecuta manual (`workflow_dispatch`) y llama a `/api/sync`.
 - **Hooks locales** (simple-git-hooks):
   - `pre-commit`: `bun run lint && bun run test`
   - `commit-msg`: `bunx commitlint --edit $1`
@@ -160,5 +166,6 @@ Objetivo: **>= 70% coverage** en el core de negocio (queries, sync, ranking).
 - `TURSO_AUTH_TOKEN`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `ADMIN_EMAILS` (opcional, CSV de emails admin)
 - `RIOT_API_KEY`
 - `CRON_SECRET` (opcional)

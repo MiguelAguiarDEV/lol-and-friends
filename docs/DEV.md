@@ -10,6 +10,8 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
   - `admin/` — panel admin y Server Actions
   - `api/sync/route.ts` — cron de sync Riot
   - `hello-world/page.tsx` — verificación de funcionamiento
+  - `profile/page.tsx` — perfil básico (requiere Clerk)
+  - `sign-in/`, `sign-up/` — rutas de autenticación de Clerk
 - `components/groups/` — tarjetas/listado de grupos
 - `components/admin/` — bloques de UI para panel admin (crear grupo, overview y detalle)
 - `components/group/` — bloques de UI para vista de grupo público
@@ -19,8 +21,11 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `components/theme/theme-switcher.tsx` — selector de tema claro/oscuro
 - `lib/db/` — cliente, schema y queries (Drizzle)
   - `migrations/` — migraciones generadas
+- `lib/auth/` — allowlist de admin por email (`ADMIN_EMAILS`)
 - `lib/riot/` — API, regiones, colas, lógica de sync y tipos de intento (`sync-attempts`)
 - `lib/players/` — métricas y ranking
+- `lib/types/` — tipos compartidos (players, api)
+- `lib/validations/` — esquemas de formularios (admin)
 - `lib/utils/` — helpers (slug/time)
 - `docs/screenshots/` — capturas UI (Playwright)
 
@@ -45,6 +50,7 @@ Proyecto Next.js (App Router) para el reto LoL. Usa Turso + Drizzle para datos y
 - `TURSO_AUTH_TOKEN`
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `ADMIN_EMAILS` (opcional, CSV de emails con permisos de admin)
 - `RIOT_API_KEY`
 - `RIOT_USER_AGENT` (opcional, default Chrome UA para evitar 403/1010)
 - `RIOT_ACCEPT_LANGUAGE` (opcional)
